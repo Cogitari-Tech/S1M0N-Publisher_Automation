@@ -1,46 +1,41 @@
-name: "CodeQL Security Scan"
+name: "CodeQL"
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["master"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["master"]
 
 jobs:
   analyze:
-    name: Analyze Python
-    runs-on: ubuntu-latest
+    name: Analyze
+    runs-on: ${{ vars.RUNNERS || 'ubuntu-latest' }}
 
     permissions:
-      security-events: write
-      packages: read
       actions: read
       contents: read
-
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [ python ]
+      security-events: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Setup Python (opcional, mas recomendado)
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.x"
+          python-version: "3.11"
 
-      # Inicializa CodeQL
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
-          languages: ${{ matrix.language }}
-          build-mode: none  # Python não requer build
+          languages: python
+          build-mode: none
+          config-file: ./.github/codeql/codeql-config.yml
 
-      # Análise
-      - name: Perform CodeQL Analysis
+      - name: Disable Python autobuild
+        run: echo "Skipping Python autobuild"
+
+      - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v4
         with:
-          category: "/language:${{ matrix.language }}"
+          category: "/language:python"
