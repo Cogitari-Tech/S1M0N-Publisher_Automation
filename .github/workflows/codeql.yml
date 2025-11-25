@@ -2,14 +2,14 @@ name: "CodeQL"
 
 on:
   push:
-    branches: ["master"]
+    branches: ["main"]
   pull_request:
-    branches: ["master"]
+    branches: ["main"]
 
 jobs:
   analyze:
     name: Analyze
-    runs-on: ${{ vars.RUNNERS || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNERS || 'windows-latest' }}
 
     permissions:
       actions: read
