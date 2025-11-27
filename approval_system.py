@@ -26,21 +26,24 @@ class PendingArticle(Base):
     
     id = Column(Integer, primary_key=True)
     title = Column(String(500))
-    meta_description = Column(Text)
+    meta_description = Column(Text)  # ← JÁ EXISTE
     content = Column(Text)
-    keywords = Column(Text)  # JSON array
+    keywords = Column(Text)
     category = Column(String(100))
     source_url = Column(String(500))
     source_name = Column(String(200))
+    
+    # NOVOS CAMPOS
+    youtube_url = Column(String(500))  # ← NOVO
+    image_path = Column(String(500))   # ← NOVO
     
     quality_score = Column(Integer)
     originality_score = Column(Integer)
     seo_score = Column(Integer)
     
-    status = Column(String(20), default='pending')  # pending, approved, rejected
+    status = Column(String(20), default='pending')
     reviewed_at = Column(DateTime)
     reviewer_notes = Column(Text)
-    
     created_at = Column(DateTime, default=datetime.now)
 
 app = Flask(__name__)
@@ -198,7 +201,7 @@ def get_stats():
 # ==========================================
 
 def publish_to_wordpress(article: PendingArticle) -> bool:
-    """Publica artigo aprovado no WordPress"""
+    """Publica artigo aprovado no WordPress COM TODOS OS RECURSOS"""
     from dotenv import load_dotenv
     load_dotenv()
     
@@ -213,14 +216,72 @@ def publish_to_wordpress(article: PendingArticle) -> bool:
     try:
         logger.info(f"📤 Publicando no WordPress: {article.title[:50]}...")
         
+        # PASSO 1: Upload da imagem (se existir)
+        featured_media_id = None
+        if article.image_path and os.path.exists(article.image_path):
+            try:
+                with open(article.image_path, 'rb') as img:
+                    files = {'file': (os.path.basename(article.image_path), img, 'image/png')}
+                    
+                    img_response = requests.post(
+                        f'{wp_url}/wp-json/wp/v2/media',
+                        auth=(wp_user, wp_pass),
+                        files=files,
+                        timeout=60
+                    )
+                    
+                    if img_response.status_code == 201:
+                        featured_media_id = img_response.json()['id']
+                        logger.info(f"✅ Imagem enviada! Media ID: {featured_media_id}")
+            except Exception as e:
+                logger.warning(f"⚠️ Erro ao enviar imagem: {e}")
+        
+        # PASSO 2: Montar conteúdo completo
+        full_content = article.content
+        
+        # Adicionar vídeo do YouTube
+        if article.youtube_url:
+            full_content += f"""
+            
+<h2>📺 Vídeo Relacionado</h2>
+<p><a href="{article.youtube_url}" target="_blank" rel="noopener">Assista ao vídeo sobre este tema no YouTube</a></p>
+"""
+        
+        # Adicionar fonte original
+        if article.source_url:
+            full_content += f"""
+
+<hr>
+<p><strong>Fonte:</strong> <a href="{article.source_url}" target="_blank" rel="noopener">{article.source_name}</a></p>
+"""
+        
+        # PASSO 3: Criar post com TODOS os metadados
         post_data = {
             'title': article.title,
-            'content': article.content,
-            'excerpt': article.meta_description,
-            'status': 'publish',  # Publica diretamente
+            'content': full_content,
+            'excerpt': article.meta_description,  # ← META DESCRIPTION
+            'status': 'publish',
             'categories': [1],  # Ajuste conforme necessário
+            'meta': {
+                'youtube_url': article.youtube_url or '',
+                'source_url': article.source_url or '',
+                'quality_score': article.quality_score
+            }
         }
         
+        # PASSO 4: Adicionar imagem de capa
+        if featured_media_id:
+            post_data['featured_media'] = featured_media_id
+        
+        # PASSO 5: Adicionar tags
+        if article.keywords:
+            try:
+                keywords_list = json.loads(article.keywords)
+                # Aqui você pode converter keywords em tag IDs se tiver mapeamento
+            except:
+                pass
+        
+        # PASSO 6: Publicar
         response = requests.post(
             f'{wp_url}/wp-json/wp/v2/posts',
             auth=(wp_user, wp_pass),
@@ -704,10 +765,7 @@ APPROVAL_HTML = '''
 # ==========================================
 
 def save_for_approval(article_data: Dict) -> int:
-    """
-    Salva artigo para aprovação manual
-    Retorna ID do artigo pendente
-    """
+    """Salva artigo para aprovação manual COM NOVOS CAMPOS"""
     session = Session()
     
     try:
@@ -719,6 +777,8 @@ def save_for_approval(article_data: Dict) -> int:
             category=article_data.get('categoria', 'Notícias'),
             source_url=article_data.get('source_url', ''),
             source_name=article_data.get('source_name', ''),
+            youtube_url=article_data.get('youtube_url', ''),    # ← NOVO
+            image_path=article_data.get('image_path', ''),      # ← NOVO
             quality_score=article_data.get('qualidade_score', 0),
             originality_score=article_data.get('originalidade_score', 0),
             seo_score=article_data.get('seo_score', 0)
@@ -728,7 +788,6 @@ def save_for_approval(article_data: Dict) -> int:
         session.commit()
         
         article_id = pending.id
-        
         logger.info(f"✅ Artigo #{article_id} salvo para aprovação: {article_data['titulo'][:50]}")
         
         return article_id
@@ -739,7 +798,6 @@ def save_for_approval(article_data: Dict) -> int:
         return 0
     finally:
         session.close()
-
 
 if __name__ == '__main__':
     print("""

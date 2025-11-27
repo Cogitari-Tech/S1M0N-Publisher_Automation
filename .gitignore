@@ -1,27 +1,50 @@
-# Arquivos sensíveis
-.env
-*.env
-
-# Logs e cache
-*.log
-robot.log.*
-__pycache__/
-*.pyc
-
-# Banco de dados
-*.db
-*.db-journal
-*.sqlite
-
-# Diretórios de output
-images/
-articles/
-backups/
-
-# AMBIENTE VIRTUAL - NOVO ITEM
+# ============================================
+# 1. AMBIENTE VIRTUAL E CONFIGURAÇÕES SENSÍVEIS
+# ============================================
+# Ignora o ambiente virtual Python
 venv/
 
-# IDEs
+# Arquivo com as chaves de API e senhas
+.env
+
+# Configurações do editor (geralmente específicas do usuário)
 .vscode/
-.idea/
-*.code-workspace
+
+# ============================================
+# 2. CACHES E COMPILAÇÕES PYTHON
+# ============================================
+# Pastas de cache e compilação de bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# ============================================
+# 3. BANCO DE DADOS E ARQUIVOS DE BACKUP
+# ============================================
+# Arquivos de banco de dados SQLite (mutáveis)
+content_robot.db
+content_robot.sqlite
+*.sqlite
+
+# Backups e Logs de execução
+backups/
+logs/
+robot.log
+
+# Arquivos de backup gerados pelo sistema (ex: content_robot_backup_20251126_...)
+*backup*
+
+# ============================================
+# 4. OUTPUTS E CONTEÚDO GERADO
+# ============================================
+# O robô gera conteúdo nestas pastas, que não devem ser rastreadas.
+articles/
+images/
+archive/
+cache/
+
+# ============================================
+# 5. ARQUIVOS OS/EDITOR
+# ============================================
+.DS_Store
+Thumbs.db
