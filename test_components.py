@@ -3,8 +3,12 @@ Script de Teste Individual de Componentes
 Execute: python test_components.py
 """
 import os
-import requests
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except Exception:
+    # If python-dotenv is not installed (CI), provide a noop to avoid import-time failure
+    def load_dotenv():
+        return
 
 load_dotenv()
 
@@ -14,6 +18,12 @@ def test_stability():
     print("  🎨 TESTE: STABILITY AI")
     print("="*60)
     
+    try:
+        import requests
+    except ModuleNotFoundError:
+        print("❌ Biblioteca 'requests' não instalada; teste ignorado.")
+        return False
+
     api_key = os.getenv('STABILITY_API_KEY')
     
     if not api_key:
@@ -48,6 +58,12 @@ def test_discord():
     print("  📱 TESTE: DISCORD WEBHOOK")
     print("="*60)
     
+    try:
+        import requests
+    except ModuleNotFoundError:
+        print("❌ Biblioteca 'requests' não instalada; teste ignorado.")
+        return False
+
     webhook = os.getenv('NOTIFICATION_WEBHOOK_URL')
     
     if not webhook:
@@ -110,6 +126,12 @@ def test_wordpress():
     print("  📝 TESTE: WORDPRESS")
     print("="*60)
     
+    try:
+        import requests
+    except ModuleNotFoundError:
+        print("❌ Biblioteca 'requests' não instalada; teste ignorado.")
+        return False
+
     wp_url = os.getenv('WORDPRESS_URL')
     wp_user = os.getenv('WORDPRESS_USERNAME')
     wp_pass = os.getenv('WORDPRESS_PASSWORD')
