@@ -100,7 +100,7 @@ def test_gemini():
         print("❌ GOOGLE_API_KEY não encontrada")
         return False
     
-    print(f"✅ API Key: {api_key[:15]}...")
+    print("✅ API Key loaded.")
     
     try:
         import google.generativeai as genai
