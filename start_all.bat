@@ -17,7 +17,7 @@ start "Dashboard" cmd /k python dashboard.py
 
 timeout /t 5 /nobreak
 
-echo [3/3] Iniciando Sistema de Aprovação...
+echo [3/3] Iniciando Sistema de Aprovação...........
 start "Approval System" cmd /k python approval_system.py
 
 echo.
