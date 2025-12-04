@@ -7,7 +7,7 @@ echo.
 cd /d "%~dp0"
 call venv\Scripts\activate.bat
 
-echo [1/3] Iniciando Content Robot...
+echo [1/3] Iniciando Content Robot......
 start "Content Robot" cmd /k python content_robot.py
 
 timeout /t 5 /nobreak
