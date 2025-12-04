@@ -28,5 +28,5 @@ echo.
 echo Dashboard: http://localhost:5000
 echo Aprovacao: http://localhost:5001
 echo.
-echo Pressione qualquer tecla para sair...
+echo Pressione qualquer tecla para sair....
 pause > nul
