@@ -7,6 +7,8 @@ Dashboard Web para Content Robot v4.0
 from flask import Flask, render_template, jsonify, request
 from flask_cors import CORS
 from datetime import datetime, timedelta
+import logging
+logging.basicConfig(level=logging.INFO)
 import os
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
@@ -112,7 +114,8 @@ def get_system_health():
         health = system_optimizer.get_system_health()
         return jsonify(health)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logging.exception("Error in get_system_health")
+        return jsonify({'error': 'Ocorreu um erro interno.'}), 500
 
 @app.route('/api/optimization-recommendations')
 def get_optimization_recommendations():
@@ -121,7 +124,8 @@ def get_optimization_recommendations():
         recs = system_optimizer.get_optimization_recommendations()
         return jsonify(recs)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logging.exception("Error in get_optimization_recommendations")
+        return jsonify({'error': 'Ocorreu um erro interno.'}), 500
 
 @app.route('/api/cleanup/cache', methods=['POST'])
 def cleanup_cache():
@@ -133,7 +137,8 @@ def cleanup_cache():
             'deleted': deleted
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logging.exception("Error in cleanup_cache")
+        return jsonify({'error': 'Ocorreu um erro interno.'}), 500
 
 @app.route('/api/cleanup/full', methods=['POST'])
 def full_cleanup():
@@ -146,7 +151,8 @@ def full_cleanup():
             'result': result
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logging.exception("Error in full_cleanup")
+        return jsonify({'error': 'Ocorreu um erro interno.'}), 500
 
 @app.route('/api/logs')
 def get_logs():
@@ -157,7 +163,8 @@ def get_logs():
             last_50 = lines[-50:]
             return jsonify({'logs': last_50})
     except Exception as e:
-        return jsonify({'logs': [f'Erro ao ler logs: {str(e)}']})
+        logging.exception("Erro ao ler logs")
+        return jsonify({'logs': ['Erro ao ler logs: Ocorreu um erro interno.']})
 
 # ========== HTML DO DASHBOARD v4.0 ==========
 
