@@ -14,9 +14,14 @@ from database_models import PublishedArticle, APIUsageLog, Base
 from cache_manager import CacheManager
 from system_optimizer import SystemOptimizer
 import json
-
+import logging
 app = Flask(__name__)
 CORS(app)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(message)s',
+    handlers=[logging.FileHandler("dashboard-errors.log", encoding='utf-8'), logging.StreamHandler()]
+)
 
 engine = create_engine('sqlite:///content_robot.db')
 Session = sessionmaker(bind=engine)
@@ -157,7 +162,8 @@ def get_logs():
             last_50 = lines[-50:]
             return jsonify({'logs': last_50})
     except Exception as e:
-        return jsonify({'logs': [f'Erro ao ler logs: {str(e)}']})
+        logging.exception("Erro ao ler logs")
+        return jsonify({'logs': ['Erro ao ler logs: erro interno']}), 500
 
 # ========== HTML DO DASHBOARD v4.0 ==========
 
