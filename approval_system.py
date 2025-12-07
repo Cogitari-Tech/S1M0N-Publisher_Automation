@@ -172,7 +172,7 @@ def reject_article(article_id):
     except Exception as e:
         session.rollback()
         logger.error(f"❌ Erro ao rejeitar artigo: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Erro interno no servidor'}), 500
     finally:
         session.close()
 
