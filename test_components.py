@@ -30,7 +30,7 @@ def test_stability():
         print("❌ STABILITY_API_KEY não encontrada no .env")
         return False
     
-    print(f"✅ API Key: {api_key[:15]}...")
+    print("✅ API Key loaded.")
     
     try:
         # Testa conta
