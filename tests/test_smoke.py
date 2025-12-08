@@ -1,8 +1,14 @@
 """Minimal smoke tests to keep CI green and validate core bootstrap paths."""
 import os
+import sys
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+# Garantir que o pacote src seja importável no runner do CI
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
 import src.config.database as database
 
