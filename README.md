@@ -1,129 +1,94 @@
-# 🤖 Content Robot v5.0 - Mini-SaaS Edition
+# 🤖 Content Robot v7.0 - Google Ecosystem Edition
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Google Cloud](https://img.shields.io/badge/Google-Vertex%20AI-4285F4)](https://cloud.google.com/vertex-ai)
 [![Gemini](https://img.shields.io/badge/AI-Gemini%202.0-orange)](https://ai.google.dev/)
-[![WordPress](https://img.shields.io/badge/CMS-WordPress-21759B)](https://wordpress.org/)
-[![Version](https://img.shields.io/badge/Version-5.0-purple)]()
+[![YouTube](https://img.shields.io/badge/API-YouTube%20Data-FF0000)](https://developers.google.com/youtube/v3)
+[![Version](https://img.shields.io/badge/Version-7.0-blue)]()
 
-**O Content Robot v5.0** é uma plataforma completa de automação de conteúdo "Set-and-Forget". Evoluindo de um script simples, ele opera agora como um **Mini-SaaS**, permitindo a gestão de credenciais, limites de segurança e prompts diretamente via Dashboard Web, eliminando a necessidade de editar código ou arquivos de configuração manual.
-
----
-
-## 🔥 Novidades da Versão 5.0
-
-### ⚙️ Painel de Controle Dinâmico
-- **Banco de Configurações:** As credenciais (WP, Gemini, YouTube) agora residem no banco de dados SQLite criptografado, não mais em arquivos `.env` estáticos.
-- **Gestão em Tempo Real:** Altere prompts de imagem, senhas e chaves de API instantaneamente via interface web.
-
-### 🛡️ Segurança & Anti-Ban
-- **Hard Limit (Trava de Segurança):** Define um limite máximo de artigos por ciclo (ex: 5 posts) para evitar detecção de spam ou bloqueios de API.
-- **Rate Limiting Inteligente:** Delays aleatórios entre requisições para simular comportamento humano.
-
-### 🎯 SEO Deep-Level (WordPress)
-- **RankMath & Yoast Nativo:** O robô injeta metadados diretamente nos campos ocultos dos plugins (`_yoast_wpseo_metadesc`, `rank_math_focus_keyword`), garantindo pontuação máxima de SEO.
-
-### ⚡ Cache Híbrido
-- **Economia de Recursos:** Cache inteligente para conteúdo gerado, buscas do YouTube e imagens, reduzindo custos de API e tempo de processamento.
+**O Content Robot v7.0** é uma plataforma "Enterprise-Grade" de automação de conteúdo. Migrada para o ecossistema Google Cloud, ela unifica inteligência textual (Gemini), visual (Vertex AI/Imagen) e multimídia (YouTube) em uma arquitetura limpa e escalável.
 
 ---
 
-## 🚀 Instalação e Upgrade
+## ⚡ Diferenciais da Versão 7.0
 
-### 1. Pré-requisitos
-- Python 3.10 ou superior
-- Git
+### ☁️ Google Ecosystem Native
+- **Imagens via Vertex AI (Imagen 3.0):** Geração de imagens fotorrealistas de nível comercial, substituindo soluções instáveis.
+- **YouTube Data API v3:** Busca nativa de vídeos contextuais para aumentar o tempo de permanência no blog.
+- **Gemini 2.0 Flash:** Motor de reescrita ultra-rápido e econômico.
 
-### 2. Instalação Limpa
+### 🌲 Modo Evergreen (On-Demand)
+- **Gerador de Guias:** Digite um tema (ex: *"O Futuro da Energia Solar"*) e o sistema pesquisa, estrutura e escreve um artigo "Cornerstone" completo (>1500 palavras) com imagens e vídeos, sem depender de notícias.
+
+### 🛡️ Segurança & Compliance
+- **Clean Architecture:** Código modular (`src/providers`, `src/services`) facilitando manutenção.
+- **Trava de Segurança:** Limite rígido de posts por ciclo para evitar detecção de spam.
+- **SEO Deep-Level:** Injeção direta de metadados nos campos ocultos do **Yoast** e **RankMath**.
+
+---
+
+## 🚀 Instalação Rápida
+
+### Pré-requisitos
+- Python 3.10+
+- Conta no Google Cloud Platform (GCP)
+
+### 1. Setup Inicial
 ```bash
+# Clone e entre na pasta
 git clone [https://github.com/seu-usuario/content-robot.git](https://github.com/seu-usuario/content-robot.git)
 cd content-robot
+
+# Instale dependências
 pip install -r requirements.txt
 
-# Executa a migração para criar o banco e tabelas de configuração
-python migration_v5.py
+# Inicialize o Banco de Dados
+python -c "from src.config.database import init_db; init_db()"
 ```
 
-### 3. Upgrade da v4.0
-Se você já possui o banco de dados da versão anterior:
-```bash
-# O script detectará o banco existente e criará a tabela SystemSettings
-# Importará automaticamente suas variáveis do antigo .env se disponível
-python migration_v5.py
-```
-
----
-
-## 🕹️ Como Usar
-
-### 1. Iniciar o Sistema
-Utilize o script orquestrador para iniciar todos os serviços (Engine, Dashboard e Aprovação) simultaneamente:
+### 2. Execução
+Utilize o launcher para iniciar Engine, Dashboard e Sistema de Aprovação:
 
 ```bash
+# Windows
 start_all.bat
+
+# Linux/Mac
+python main.py & python dashboard_launcher.py & python approval_system.py
 ```
 
-Isso abrirá três janelas de terminal e disponibilizará:
-* **Dashboard de Gestão:** http://localhost:5000
-* **Sistema de Aprovação:** http://localhost:5001
-* **Engine (Background):** Monitora feeds e processa conteúdo.
-
-### 2. Configuração (Fluxo Novo)
-**Não edite arquivos `.py` ou `.env` para ajustes operacionais.**
-
-1.  Acesse o **Dashboard** (Porta 5000).
-2.  Vá para a aba **⚙️ Configurações**.
-3.  Preencha/Atualize:
-    * **WordPress:** URL, Usuário e Application Password.
-    * **APIs:** Insira as chaves do Gemini, YouTube e Stability AI.
-    * **Operacional:** Defina o "Limite de Artigos por Ciclo" (Recomendado: 5).
-4.  Clique em **Salvar**. O robô aplicará as mudanças no próximo ciclo agendado.
-
-### 3. Workflows de Conteúdo
-
-#### 📰 Fluxo de Notícias (Automático)
-O robô monitora os Feeds RSS configurados.
-1.  **Monitoramento:** A cada ciclo (ex: 120 min), busca novidades.
-2.  **Filtragem:** Verifica duplicatas no banco de dados.
-3.  **Processamento:**
-    * Reescreve o texto com IA (Gemini).
-    * Gera imagem editorial (Stability AI).
-    * Busca vídeo relacionado (YouTube).
-4.  **Publicação:** Envia para o WordPress (Direto ou via Aprovação).
-
-#### 🌲 Fluxo Evergreen (Configurável)
-Para gerar conteúdo atemporal:
-1.  Acesse **Configurações** no Dashboard.
-2.  Altere o **Prompt de Estilo** para focar em artigos educativos ou listas (ex: "Crie um guia completo sobre...").
-3.  O sistema aplicará este novo estilo aos tópicos capturados, transformando notícias passageiras em guias evergreen.
+### 3. Acesso
+- **Dashboard de Gestão:** http://localhost:5000
+- **Sistema de Aprovação:** http://localhost:5001
 
 ---
 
-## 🧩 Estrutura do Projeto
+## ⚙️ Configuração (Sem Código)
+
+Não edite arquivos `.env`. Toda a configuração é feita via Dashboard:
+1. Acesse a aba **Configurações**.
+2. Insira suas credenciais do Google Cloud e WordPress.
+3. Clique em Salvar. O sistema fará o "Hot-Reload" no próximo ciclo.
+
+---
+
+## 🧩 Estrutura de Arquivos (Clean Arch)
 
 ```
 content-robot/
-├── content_robot.py      # Engine Principal (Lógica de Segurança e SEO v5.0)
-├── dashboard.py          # Dashboard Web & API de Settings
-├── approval_system.py    # Interface de Revisão Humana
-├── database_models.py    # Schema do Banco (inclui tabela SystemSettings)
-├── migration_v5.py       # Script de Migração de Banco e Seed
-├── cache_manager.py      # Gestão de Cache (YouTube/Conteúdo/Imagens)
-├── system_optimizer.py   # Rotinas de Limpeza e Manutenção
-├── start_all.bat         # Launcher Windows
-├── requirements.txt      # Dependências Python
-└── content_robot.db      # Banco de Dados SQLite (NÃO COMMITAR)
+├── main.py               # Entry Point do Motor
+├── dashboard_launcher.py # Entry Point da Interface
+├── src/
+│   ├── config/           # Settings e Database
+│   ├── interface/        # Flask App e UI
+│   ├── models/           # Schema SQLAlchemy
+│   ├── providers/        # Conectores (RSS, GNews)
+│   └── services/         # Lógica de Negócio (AI, Video, Engine)
+└── content_robot.db      # Banco de Dados (Ignorado no Git)
 ```
-
----
-
-## ⚠️ Segurança e Dados
-
-* **Credenciais no Banco:** O arquivo `content_robot.db` agora contém suas chaves de API e senhas. Certifique-se de que ele esteja listado no `.gitignore`.
-* **Logs:** O arquivo `robot.log` é gerado localmente para auditoria de erros e performance.
 
 ---
 
 ## 📜 Licença
-
-Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
+MIT License.
