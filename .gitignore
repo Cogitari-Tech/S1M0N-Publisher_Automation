@@ -1,50 +1,86 @@
-# ============================================
-# 1. AMBIENTE VIRTUAL E CONFIGURAÇÕES SENSÍVEIS
-# ============================================
-# Ignora o ambiente virtual Python
+# =======================================================
+# .gitignore - Content Robot v7.0
+# =======================================================
+
+# 1. AMBIENTE VIRTUAL E DEPENDÊNCIAS
+# -------------------------------------------------------
 venv/
+env/
+ENV/
+.venv/
+build/
+dist/
+*.egg-info/
+.eggs/
 
-# Arquivo com as chaves de API e senhas
+# 2. CONFIGURAÇÕES SENSÍVEIS (CRÍTICO)
+# -------------------------------------------------------
+# Variáveis de ambiente
 .env
+.env.local
+.env.development
+.env.test
 
-# Configurações do editor (geralmente específicas do usuário)
-.vscode/
-
-# ============================================
-# 2. CACHES E COMPILAÇÕES PYTHON
-# ============================================
-# Pastas de cache e compilação de bytecode
-__pycache__/
-*.pyc
-*.pyo
-
-# ============================================
-# 3. BANCO DE DADOS E ARQUIVOS DE BACKUP
-# ============================================
-# Arquivos de banco de dados SQLite (mutáveis)
-content_robot.db
-content_robot.sqlite
+# BANCO DE DADOS (CRÍTICO v7.0)
+# Contém chaves de API e configurações do SaaS. NUNCA COMMITAR.
+*.db
 *.sqlite
+*.sqlite3
+content_robot.db
+instance/
 
-# Backups e Logs de execução
-backups/
+# 3. ARTEFATOS PYTHON (COMPILAÇÃO)
+# -------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 4. LOGS E DEBUG
+# -------------------------------------------------------
+# Logs de execução do robô
+*.log
+robot.log*
 logs/
-robot.log
 
-# Arquivos de backup gerados pelo sistema (ex: content_robot_backup_20251126_...)
-*backup*
+# Arquivos de erro ou debug temporários
+debug_*.txt
+pip-log.txt
+pip-delete-this-directory.txt
 
-# ============================================
-# 4. OUTPUTS E CONTEÚDO GERADO
-# ============================================
-# O robô gera conteúdo nestas pastas, que não devem ser rastreadas.
-articles/
+# 5. CONTEÚDO GERADO (RUNTIME)
+# -------------------------------------------------------
+# Imagens baixadas ou geradas (Vertex AI)
 images/
-archive/
-cache/
+# Backups manuais ou automáticos
+backups/
+*backup*
+# Relatórios exportados
+exports/
 
-# ============================================
-# 5. ARQUIVOS OS/EDITOR
-# ============================================
-.DS_Store
+# 6. CACHE DE SISTEMA E TESTES
+# -------------------------------------------------------
+cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# 7. ARQUIVOS DE IDE E SISTEMA OPERACIONAL
+# -------------------------------------------------------
+# Windows
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# VS Code / PyCharm
+.vscode/
+.idea/
+*.swp
+*.swo
