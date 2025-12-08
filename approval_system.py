@@ -140,7 +140,7 @@ def approve_article(article_id):
     except Exception as e:
         session.rollback()
         logger.error(f"❌ Erro ao aprovar artigo: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': "Ocorreu um erro interno ao aprovar o artigo."}), 500
     finally:
         session.close()
 
