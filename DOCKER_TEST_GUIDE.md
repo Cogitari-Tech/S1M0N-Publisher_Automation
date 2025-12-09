@@ -1,9 +1,58 @@
-# Guia de Testes Locais com Docker
+# Guia de Testes e Execução Local com Docker
 
 ## Pré-requisitos
 - Docker e Docker Compose instalados
+- Porta 5000 disponível (Dashboard)
 
-## Comandos Disponíveis
+---
+
+## 🚀 Execução Completa (Dashboard + Robot em Background)
+
+### 1. Iniciar a aplicação em background
+```bash
+docker-compose up -d
+```
+Isso inicia:
+- **Dashboard** na `http://localhost:5000` (web interface)
+- **Robot** processando conteúdo em background
+- **Rede interna** para comunicação entre serviços
+
+### 2. Verificar status dos serviços
+```bash
+docker-compose ps
+```
+
+### 3. Ver logs em tempo real
+```bash
+# Logs do dashboard
+docker-compose logs -f dashboard
+
+# Logs do robot
+docker-compose logs -f robot
+
+# Todos os logs
+docker-compose logs -f
+```
+
+### 4. Parar a aplicação
+```bash
+docker-compose down
+```
+
+### 5. Limpar tudo (volumes, imagens)
+```bash
+docker-compose down -v --rmi all
+```
+
+### 6. Acessar shell do container em execução
+```bash
+docker-compose exec dashboard bash
+docker-compose exec robot bash
+```
+
+---
+
+## 🧪 Testes Unitários e Lint
 
 ### 1. Rodar todos os testes
 ```bash
@@ -26,32 +75,74 @@ docker-compose -f docker-compose.test.yml up lint
 docker-compose -f docker-compose.test.yml run --rm test pytest tests/test_smoke.py -v
 ```
 
-### 5. Modo interativo (shell dentro do container)
+### 5. Modo interativo (shell dentro do container de teste)
 ```bash
 docker-compose -f docker-compose.test.yml run --rm test bash
 ```
 
-### 6. Limpar containers e imagens
+### 6. Limpar containers de teste
 ```bash
 docker-compose -f docker-compose.test.yml down --rmi all
 ```
 
-## Estrutura
-- `Dockerfile.test`: Imagem Python 3.10 com pytest, flake8 e dependências
-- `docker-compose.test.yml`: Orquestração de serviços (test, test-with-coverage, lint)
-- `.dockerignore`: Exclui arquivos desnecessários do build
+---
 
-## Exemplo de Fluxo de Trabalho
+## 📁 Estrutura de Arquivos
+
+### Para Execução Completa
+- `Dockerfile`: Imagem da aplicação (dashboard + robot)
+- `docker-compose.yml`: Orquestração de serviços (dashboard, robot, db-helper)
+- `.dockerignore`: Otimização de build
+
+### Para Testes
+- `Dockerfile.test`: Imagem com pytest, flake8 e dependências
+- `docker-compose.test.yml`: Serviços de teste (test, test-with-coverage, lint)
+
+---
+
+## 📋 Fluxo de Desenvolvimento Típico
+
 ```bash
-# 1. Build inicial
-docker-compose -f docker-compose.test.yml build
+# 1. Iniciar ambiente completo em background
+docker-compose up -d
 
-# 2. Rodar lint
-docker-compose -f docker-compose.test.yml up lint
+# 2. Acessar dashboard
+open http://localhost:5000
 
-# 3. Rodar testes
+# 3. Ver logs em tempo real
+docker-compose logs -f
+
+# 4. Fazer edições no código (hot reload ativado via volumes)
+
+# 5. Quando pronto, rodar testes
 docker-compose -f docker-compose.test.yml up test
 
-# 4. Gerar relatório de cobertura
-docker-compose -f docker-compose.test.yml up test-with-coverage
+# 6. Parar tudo
+docker-compose down
+```
+
+---
+
+## 🔍 Troubleshooting
+
+### Porta 5000 já em uso
+```bash
+# Liberar a porta ou usar outra no docker-compose.yml
+# Editar: ports: - "5001:5000"
+```
+
+### Erro de permissão ao escrever logs/imagens
+```bash
+docker-compose exec dashboard bash
+chmod -R 755 /app/logs /app/images
+```
+
+### Reiniciar um serviço específico
+```bash
+docker-compose restart dashboard
+```
+
+### Rebuild completo
+```bash
+docker-compose build --no-cache
 ```
