@@ -1,0 +1,25 @@
+# Dockerfile para executar testes locais
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Instalar dependências do sistema
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar requirements
+COPY requirements.txt .
+
+# Instalar dependências Python
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir pytest pytest-cov flake8
+
+# Copiar código fonte
+COPY . .
+
+# Garantir que src é importável
+ENV PYTHONPATH=/app:$PYTHONPATH
+
+# Comando padrão: rodar testes
+CMD ["pytest", "-v", "--tb=short"]
