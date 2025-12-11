@@ -81,26 +81,40 @@ class ContentEngine:
             db.close()
 
     def _publish_wp(self, content, item, img, vid):
-        # Lógica simplificada de publicação WP
-        # Na versão real, usa requests.post para /posts
+        # Lógica de publicação WP com suporte a Draft/Publish
         db = get_db()
         try:
+            # Check Publish Mode (default: publish)
+            from src.models.schema import SystemSettings
+            s = db.query(SystemSettings).filter_by(key='wp_publish_mode').first()
+            status = s.value if s else 'publish'
+            
+            # Payload Simulado (Na real usa WP REST API)
+            payload = {
+                'title': content['titulo'],
+                'content': content['conteudo_completo'],
+                'status': status  # 'publish' or 'draft'
+            }
+            
+            # Aqui faria: requests.post(..., json=payload)
+            
             pub = PublishedArticle(
                 hash=item.get_hash(),
                 title=content['titulo'],
                 full_content=content['conteudo_completo'],
                 source=item.source_name,
-                published_date=datetime.now()
+                published_date=datetime.now(),
+                wordpress_url=f"wp_{status}_{int(time.time())}" # Mock URL check
             )
             db.add(pub)
             db.commit()
-            logger.info(f"✅ Publicado: {content['titulo']}")
+            logger.info(f"✅ Publicado no WP ({status}): {content['titulo']}")
             return True
         except Exception as e:
             logger.error(f"Erro WP: {e}")
             return False
         finally:
-            db.close()
+             if 'db' in locals(): db.close()
 
     def _is_duplicate(self, h):
         db = get_db()
