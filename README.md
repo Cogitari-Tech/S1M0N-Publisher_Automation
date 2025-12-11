@@ -55,12 +55,12 @@ Utilize o launcher para iniciar Engine, Dashboard e Sistema de Aprovação:
 start_all.bat
 
 # Linux/Mac
-python main.py & python dashboard_launcher.py & python approval_system.py
+# Linux/Mac
+python main.py & python dashboard_launcher.py
 ```
 
 ### 3. Acesso
 - **Dashboard de Gestão:** http://localhost:5000
-- **Sistema de Aprovação:** http://localhost:5001
 
 ---
 

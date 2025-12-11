@@ -44,21 +44,44 @@ def main():
         # Ciclo de Boot (Executa imediatamente)
         safe_run_cycle(engine)
         
-        # Agendamento
-        schedule.every(2).hours.do(safe_run_cycle, engine)
-        
-        logger.info("✅ Motor iniciado. Aguardando agendamento...")
-        
-        while True:
-            try:
-                schedule.run_pending()
-                time.sleep(1)
-            except KeyboardInterrupt:
-                logger.info("🛑 Parada manual solicitada.")
-                break
-            except Exception as e:
-                logger.error(f"❌ Erro no Loop Principal: {e}")
-                time.sleep(5) # Espera segura antes de tentar novamente
+    # Agendamento Inicial
+    from src.models.schema import SystemSettings
+    
+    def get_cycle_interval():
+        try:
+            db = next(get_db())
+            s = db.query(SystemSettings).filter_by(key='cycle_interval').first()
+            return int(s.value) if s and s.value.isdigit() else 120
+        except:
+            return 120
+
+    current_interval = get_cycle_interval()
+    schedule.every(current_interval).minutes.do(safe_run_cycle, engine)
+    logger.info(f"✅ Motor iniciado. Ciclo: {current_interval} min. Aguardando agendamento...")
+    
+    last_check = time.time()
+    
+    while True:
+        try:
+            schedule.run_pending()
+            
+            # Checa mudanças de config a cada 30s
+            if time.time() - last_check > 30:
+                new_interval = get_cycle_interval()
+                if new_interval != current_interval:
+                    logger.info(f"🔄 Atualizando ciclo: {current_interval} -> {new_interval} min")
+                    schedule.clear()
+                    schedule.every(new_interval).minutes.do(safe_run_cycle, engine)
+                    current_interval = new_interval
+                last_check = time.time()
+                
+            time.sleep(1)
+        except KeyboardInterrupt:
+            logger.info("🛑 Parada manual solicitada.")
+            break
+        except Exception as e:
+            logger.error(f"❌ Erro no Loop Principal: {e}")
+            time.sleep(5) # Espera segura antes de tentar novamente
                 
     except Exception as e:
         logger.critical(f"🔥 O Motor caiu: {e}", exc_info=True)

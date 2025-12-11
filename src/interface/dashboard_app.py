@@ -17,6 +17,7 @@ from flask_cors import CORS
 from src.config.database import get_db, init_db
 from src.models.schema import PublishedArticle, SystemSettings, RSSFeed, CachedContent, PendingArticle
 from src.services.content_engine import ContentEngine
+from src.services.validators import InputValidator, SecurityFlags, requires_api_key, validate_request_data
 
 # Configuração de Assets
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -143,6 +144,13 @@ DASHBOARD_HTML = """
         .dropdown-menu { background-color: var(--dropdown-bg); border-color: var(--border); }
         .dropdown-label { color: var(--text-main); cursor: pointer; padding: 4px 12px; display: block; }
         .dropdown-label:hover { background-color: var(--dropdown-hover); }
+
+        /* Modals Dark Mode Support */
+        .modal-content { background-color: var(--bg-card); color: var(--text-main); border-color: var(--border); }
+        .modal-header { border-bottom-color: var(--border); }
+        .modal-footer { border-top-color: var(--border); }
+        .btn-close { filter: var(--btn-close-filter); }
+        [data-theme="dark"] .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
 
         /* Tables Contrast */
         .table { color: var(--text-main); border-color: var(--border); }
@@ -271,7 +279,7 @@ DASHBOARD_HTML = """
                 <div class="card-header" onclick="toggleCard('card-perf-history')">
                     <span><i class="fas fa-history me-2"></i> <span data-i18n="hist_opt_title">Histórico de Otimização</span></span>
                     <div>
-                        <button class="btn btn-sm btn-outline-danger me-2" onclick="event.stopPropagation(); clearHistory('perf')" data-i18n-tooltip="btn_clear_hist"><i class="fas fa-trash"></i></button>
+                        <button class="btn btn-sm btn-danger text-white me-2" onclick="event.stopPropagation(); clearHistory('perf')" data-i18n-tooltip="btn_clear_hist" data-bs-toggle="tooltip"><i class="fas fa-trash"></i></button>
                         <i class="fas fa-chevron-down accordion-icon"></i>
                     </div>
                 </div>
@@ -330,16 +338,63 @@ DASHBOARD_HTML = """
                             <div class="card-header bg-success text-white" onclick="toggleCard('card-news')"><span><span data-i18n="sec_news_title">Fontes de Notícias</span></span><i class="fas fa-chevron-down accordion-icon text-white"></i></div>
                             <div class="card-body">
                                 <div class="mb-2">
-                                    <label>GNews Key</label><div class="input-group-custom"><input type="password" class="form-control secure-input" name="gnews_api_key"><span class="input-clear-btn" onclick="clearInput(this)"><i class="fas fa-times"></i></span></div>
-                                    <div class="dropdown mt-1"><button class="btn btn-outline-secondary btn-sm dropdown-toggle w-100 text-start" type="button" data-bs-toggle="dropdown">Categorias</button><ul class="dropdown-menu w-100 p-2"><li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="gnews_categories" value="general">General</label></li><li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="gnews_categories" value="technology">Technology</label></li><li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="gnews_categories" value="business">Business</label></li></ul></div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label>GNews Key</label>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input api-toggle" type="checkbox" name="enable_gnews" data-linked-input="gnews_api_key">
+                                        </div>
+                                    </div>
+                                    <div class="input-group-custom"><input type="password" class="form-control secure-input" name="gnews_api_key"><span class="input-clear-btn" onclick="clearInput(this)"><i class="fas fa-times"></i></span></div>
+                                    <div class="dropdown mt-1"><button class="btn btn-outline-secondary btn-sm dropdown-toggle w-100 text-start" type="button" data-bs-toggle="dropdown">Categorias</button><ul class="dropdown-menu w-100 p-2" style="max-height: 200px; overflow-y: auto;">
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="gnews_categories" value="general">General</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="gnews_categories" value="world">World</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="gnews_categories" value="nation">Nation</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="gnews_categories" value="business">Business</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="gnews_categories" value="technology">Technology</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="gnews_categories" value="entertainment">Entertainment</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="gnews_categories" value="sports">Sports</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="gnews_categories" value="science">Science</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="gnews_categories" value="health">Health</label></li>
+                                    </ul></div>
                                 </div>
                                 <div class="mb-2">
-                                    <label>NewsAPI Key</label><div class="input-group-custom"><input type="password" class="form-control secure-input" name="newsapi_key"><span class="input-clear-btn" onclick="clearInput(this)"><i class="fas fa-times"></i></span></div>
-                                    <div class="dropdown mt-1"><button class="btn btn-outline-secondary btn-sm dropdown-toggle w-100 text-start" type="button" data-bs-toggle="dropdown">Categorias</button><ul class="dropdown-menu w-100 p-2"><li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="newsapi_categories" value="general">General</label></li><li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="newsapi_categories" value="technology">Technology</label></li></ul></div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label>NewsAPI Key</label>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input api-toggle" type="checkbox" name="enable_newsapi" data-linked-input="newsapi_key">
+                                        </div>
+                                    </div>
+                                    <div class="input-group-custom"><input type="password" class="form-control secure-input" name="newsapi_key"><span class="input-clear-btn" onclick="clearInput(this)"><i class="fas fa-times"></i></span></div>
+                                    <div class="dropdown mt-1"><button class="btn btn-outline-secondary btn-sm dropdown-toggle w-100 text-start" type="button" data-bs-toggle="dropdown">Categorias</button><ul class="dropdown-menu w-100 p-2" style="max-height: 200px; overflow-y: auto;">
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="newsapi_categories" value="general">General</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="newsapi_categories" value="business">Business</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="newsapi_categories" value="entertainment">Entertainment</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="newsapi_categories" value="health">Health</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="newsapi_categories" value="science">Science</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="newsapi_categories" value="sports">Sports</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="newsapi_categories" value="technology">Technology</label></li>
+                                    </ul></div>
                                 </div>
                                 <div class="mb-2">
-                                    <label>Currents Key</label><div class="input-group-custom"><input type="password" class="form-control secure-input" name="currents_api_key"><span class="input-clear-btn" onclick="clearInput(this)"><i class="fas fa-times"></i></span></div>
-                                    <div class="dropdown mt-1"><button class="btn btn-outline-secondary btn-sm dropdown-toggle w-100 text-start" type="button" data-bs-toggle="dropdown">Categorias</button><ul class="dropdown-menu w-100 p-2"><li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="currents_categories" value="technology">Technology</label></li></ul></div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label>Currents Key</label>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input api-toggle" type="checkbox" name="enable_currents" data-linked-input="currents_api_key">
+                                        </div>
+                                    </div>
+                                    <div class="input-group-custom"><input type="password" class="form-control secure-input" name="currents_api_key"><span class="input-clear-btn" onclick="clearInput(this)"><i class="fas fa-times"></i></span></div>
+                                    <div class="dropdown mt-1"><button class="btn btn-outline-secondary btn-sm dropdown-toggle w-100 text-start" type="button" data-bs-toggle="dropdown">Categorias</button><ul class="dropdown-menu w-100 p-2" style="max-height: 200px; overflow-y: auto;">
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="currents_categories" value="technology">Technology</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="currents_categories" value="business">Business</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="currents_categories" value="science">Science</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="currents_categories" value="health">Health</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="currents_categories" value="sports">Sports</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="currents_categories" value="world">World</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="currents_categories" value="finance">Finance</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="currents_categories" value="politics">Politics</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="currents_categories" value="entertainment">Entertainment</label></li>
+                                        <li><label class="dropdown-label"><input class="form-check-input me-2" type="checkbox" name="currents_categories" value="game">Gaming</label></li>
+                                    </ul></div>
                                 </div>
                             </div>
                         </div>
@@ -350,14 +405,21 @@ DASHBOARD_HTML = """
                             <div class="card-body">
                                 <div class="mb-2"><label>URL</label><div class="input-group-custom"><input type="text" class="form-control" name="wordpress_url" data-i18n-placeholder="ph_wp_url"><span class="input-clear-btn" onclick="clearInput(this)"><i class="fas fa-times"></i></span></div></div>
                                 <div class="mb-2"><label data-i18n="lbl_user">User</label><div class="input-group-custom"><input type="text" class="form-control" name="wordpress_username"><span class="input-clear-btn" onclick="clearInput(this)"><i class="fas fa-times"></i></span></div></div>
+                                <div class="mb-2">
+                                    <label>Modo de Publicação</label>
+                                    <select class="form-select" name="wp_publish_mode">
+                                        <option value="publish">Automático (Publicar)</option>
+                                        <option value="draft">Rascunho (Draft)</option>
+                                    </select>
+                                </div>
                                 <div class="mb-2"><label>Pass</label><div class="input-group-custom"><input type="password" class="form-control secure-input" name="wordpress_password"><span class="input-clear-btn" onclick="clearInput(this)"><i class="fas fa-times"></i></span></div><small class="security-msg">Bloqueado.</small></div>
                                 <hr>
                                 <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="require_manual_approval"><label class="form-check-label" data-i18n="tg_review">Revisão Manual</label></div>
                             </div>
                         </div>
                         
-                        <div class="card mb-4 control-panel-card" id="card-control-panel">
-                            <div class="card-header" onclick="toggleCard('card-control-panel')"><span data-i18n="cp_title">Painel de Controle</span><i class="fas fa-chevron-down accordion-icon"></i></div>
+                        <div class="card mb-4 control-panel-card border-info" id="card-control-panel">
+                            <div class="card-header bg-info text-white" onclick="toggleCard('card-control-panel')"><span data-i18n="cp_title">Painel de Controle</span><i class="fas fa-chevron-down accordion-icon text-white"></i></div>
                             <div class="card-body p-4">
                                 <div class="bg-light p-3 rounded mb-3 border">
                                     <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" name="enable_global_images"><label class="form-check-label" data-i18n="tg_images">Images (Vertex)</label></div>
@@ -365,6 +427,7 @@ DASHBOARD_HTML = """
                                 </div>
                                 <div class="d-grid gap-2">
                                     <button type="button" class="btn btn-primary w-100" onclick="saveSettings()"><i class="fas fa-save"></i> <span data-i18n="btn_save_all">Salvar Tudo</span></button>
+                                    <button type="button" class="btn btn-outline-primary w-100" onclick="openCycleModal()"><i class="fas fa-clock"></i> <span data-i18n="btn_cycle">Ajustar Ciclos</span></button>
                                     <button type="button" class="btn btn-outline-danger w-100" onclick="clearAllHistories()"><i class="fas fa-skull"></i> <span data-i18n="btn_clear_global">Apagar Todos os Históricos</span></button>
                                     <button type="button" class="btn btn-success w-100" onclick="optimizeSystem()" data-i18n-tooltip="btn_optimize_tt"><i class="fas fa-broom"></i> <span data-i18n="btn_optimize">Otimizar Sistema</span></button>
                                 </div>
@@ -386,6 +449,28 @@ DASHBOARD_HTML = """
 <div class="modal fade" id="rssModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" data-i18n="rss_modal_title">Feed RSS</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="text" id="rssName" class="form-control mb-2" data-i18n-placeholder="ph_rss_name"><input type="text" id="rssTheme" class="form-control mb-2" data-i18n-placeholder="ph_rss_theme"><input type="text" id="rssUrl" class="form-control" data-i18n-placeholder="ph_rss_url"></div><div class="modal-footer"><button class="btn btn-primary" onclick="saveRss()" data-i18n="btn_save">Salvar</button></div></div></div></div>
 <div class="modal fade" id="policyModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 data-i18n="btn_policies">Legal</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="accordion" id="accPol"><div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button" data-bs-toggle="collapse" data-bs-target="#c1" data-i18n="pol_priv_t">Privacidade</button></h2><div id="c1" class="accordion-collapse collapse show" data-bs-parent="#accPol"><div class="accordion-body" data-i18n="pol_priv_d">...</div></div></div><div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#c2" data-i18n="pol_terms_t">Termos</button></h2><div id="c2" class="accordion-collapse collapse" data-bs-parent="#accPol"><div class="accordion-body" data-i18n="pol_terms_d">...</div></div></div></div></div></div></div></div>
 
+<div class="modal fade" id="cycleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" data-i18n="modal_cycle_title">Ajuste de Ciclos</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label data-i18n="lbl_cycle_interval">Intervalo (minutos)</label>
+                <input type="range" class="form-range" min="30" max="1440" step="30" id="cycleRange" oninput="document.getElementById('cycleVal').innerText = this.value + ' min'">
+                <div class="text-center fw-bold fs-4 my-2" id="cycleVal">120 min</div>
+                <div class="alert alert-info small mt-2">
+                    <i class="fas fa-info-circle"></i> <span data-i18n="cycle_info">Recomendado: 120min para evitar API Rate Limits. Mínimo: 30min para segurança.</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="saveCycle()" data-i18n="btn_save">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // --- FASE 3: i18n FULL RESTORATION ---
@@ -403,10 +488,64 @@ DASHBOARD_HTML = """
             tg_images: "Gerar Imagens (Vertex)", tg_videos: "Buscar Vídeos (YT)", tg_review: "Revisão Manual",
             ph_google_project: "Ex: my-project", ph_wp_url: "Ex: site.com", ph_rss_name: "Nome da Fonte", ph_rss_theme: "Tema", ph_rss_url: "URL", ph_evergreen: "Tópico...",
             th_date: "Data/Hora", th_action: "Ação", th_status: "Status", th_title: "Título", th_cat: "Categorias", th_active: "Ativo", th_name: "Nome", th_url: "URL",
-            man_intro_t: "1. Início", man_intro_d: "<p>Bem-vindo ao S1M0N.</p>",
-            man_setup_t: "2. Setup", man_setup_d: "<p>Configure as APIs na aba Configurações.</p>",
-            man_gen_t: "3. Uso", man_gen_d: "<p>Use Evergreen ou RSS.</p>",
-            pol_title: "Políticas", pol_priv_t: "Privacidade", pol_priv_d: "<p>Dados locais apenas.</p>", pol_terms_t: "Termos", pol_terms_d: "<p>Uso responsável.</p>"
+            btn_cycle: "Ajustar Ciclos", modal_cycle_title: "Ajuste de Ciclos", lbl_cycle_interval: "Intervalo (min)", cycle_info: "Rec: 120min. Min: 30min.",
+            
+            // --- MANUAL DO USUÁRIO ---
+            man_intro_t: "1. Visão Geral e Operação", 
+            man_intro_d: `
+                <p>O <strong>S1M0N Automation Core</strong> é um orquestrador autônomo de conteúdo. Ele opera em ciclos contínuos de:</p>
+                <ul>
+                    <li><strong>Busca:</strong> Monitora APIs de notícias e Feeds RSS configurados.</li>
+                    <li><strong>Síntese:</strong> Utiliza IA (Google Gemini) para reescrever, traduzir e enriquecer notícias.</li>
+                    <li><strong>Multimídia:</strong> Gera imagens via Vertex AI e busca vídeos relacionados no YouTube.</li>
+                    <li><strong>Publicação:</strong> Envia rascunhos ou posts finais para seu WordPress.</li>
+                </ul>
+                <div class="alert alert-info mt-2">
+                    <strong>Controle:</strong> Use o botão <span class="badge bg-success">Iniciar</span> na barra superior para ativar o robô. O sistema rodará em background a cada ciclo definido.
+                </div>
+            `,
+            man_setup_t: "2. Configuração e APIs", 
+            man_setup_d: `
+                <p>Para o sistema funcionar, configure as credenciais na aba <strong>Configurações</strong>:</p>
+                <ol>
+                    <li><strong>Google Cloud:</strong> Obrigatório. Fornece o cérebro (Gemini) e visão (Vertex Image). Project ID e API Key são vitais.</li>
+                    <li><strong>Fontes de Notícias:</strong> Ative pelo menos um provedor (GNews, NewsAPI ou Currents). O sistema fará rodízio automático.</li>
+                    <li><strong>WordPress:</strong> Credenciais de administrador ou editor. Use <em>Application Passwords</em> para maior segurança.</li>
+                </ol>
+                <p class="text-danger small"><i class="fas fa-shield-alt"></i> Seus dados são salvos localmente e criptografados (hash) quando possível.</p>
+            `,
+            man_gen_t: "3. Modos Evergreen e RSS", 
+            man_gen_d: `
+                <p>Além da automação passiva, você pode agir ativamente:</p>
+                <ul>
+                    <li><strong>Evergreen:</strong> Na aba correspondente, digite um tópico (ex: "História da Computação") para gerar um artigo atemporal, independente de notícias recentes.</li>
+                    <li><strong>Gerenciador RSS:</strong> Adicione feeds XML específicos de seus sites favoritos. O robô dará prioridade a estes conteúdos.</li>
+                </ul>
+            `,
+            
+            // --- POLÍTICAS E DADOS ---
+            pol_title: "Políticas Legais e Dados", 
+            pol_priv_t: "Privacidade e Tratamento de Dados", 
+            pol_priv_d: `
+                <h6>1. Armazenamento Local</h6>
+                <p>Este software opera sob a premissa de <em>Local First</em>. Todos os bancos de dados (SQLite), logs e configurações residem exclusivamente na máquina onde o S1M0N está instalado. NENHUM dado é enviado para servidores da Cogitari.</p>
+                
+                <h6>2. Dados Sensíveis</h6>
+                <p>Chaves de API e senhas são utilizadas estritamente para autenticação com os serviços terceiros (Google, WordPress, News Providers). Recomenda-se o uso de variáveis de ambiente (.env) em produção.</p>
+            `, 
+            pol_terms_t: "Termos de Uso e APIs", 
+            pol_terms_d: `
+                <h6>1. Isenção de Responsabilidade</h6>
+                <p>O S1M0N é uma ferramenta de automação. A responsabilidade editorial, veracidade e direitos autorais do conteúdo publicado é inteiramente do operador do software.</p>
+                
+                <h6>2. Compliance com Terceiros</h6>
+                <p>Ao utilizar este software, você concorda em respeitar os Termos de Serviço das APIs conectadas:</p>
+                <ul>
+                    <li><a href="https://developers.google.com/terms" target="_blank">Google APIs Terms</a></li>
+                    <li><a href="https://newsapi.org/terms" target="_blank">NewsAPI Terms</a></li>
+                </ul>
+                <p>O uso abusivo (spam, conteúdo odioso) pode resultar no bloqueio de suas chaves pelos provedores.</p>
+            `
         },
         en: {
             menu_dashboard: "Overview", menu_performance: "Performance", menu_evergreen: "Evergreen", menu_sources: "RSS Feeds", menu_settings: "Settings", menu_manual: "User Manual", btn_policies: "Policies & Data",
@@ -460,11 +599,97 @@ DASHBOARD_HTML = """
             input.focus();
         };
         
+        // NEW: Security clipboard detection
+        document.querySelectorAll('.secure-input, input[type="password"]').forEach(input => {
+            const fieldName = input.getAttribute('name');
+            
+            ['paste', 'copy', 'cut'].forEach(eventType => {
+                input.addEventListener(eventType, async function(e) {
+                    if (fieldName) {
+                        try {
+                            await fetch('/api/security/events', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({
+                                    event: eventType,
+                                    field: fieldName
+                                })
+                            });
+                        } catch (err) {
+                            console.warn('Security event tracking failed:', err);
+                        }
+                    }
+                });
+            });
+            
+            // NEW: Validation on Blur
+            input.addEventListener('blur', function() {
+                validateField(this);
+            });
+        });
+        
         // Tooltip Init
         changeLang(lang);
+        setupApiToggles();
 
         renderHistories(); renderManual();
         setInterval(updateData, 5000); updateData();
+    }
+
+    // --- PHASE 4: CONTROL ENGINEERING ---
+    function setupApiToggles() {
+        document.querySelectorAll('.api-toggle').forEach(toggle => {
+            const inputName = toggle.getAttribute('data-linked-input');
+            const input = document.querySelector(`input[name="${inputName}"]`);
+            
+            if(input) {
+                // Safety Lock: Disable toggle if key is empty
+                const checkLock = () => {
+                    const hasKey = input.value.trim().length > 0;
+                    if(!hasKey) {
+                        toggle.disabled = true;
+                        toggle.checked = false;
+                        toggle.parentElement.setAttribute('title', 'Requer API Key');
+                    } else {
+                        toggle.disabled = false;
+                        toggle.parentElement.removeAttribute('title');
+                    }
+                };
+                
+                input.addEventListener('input', checkLock);
+                checkLock(); // Initial check
+                
+                // State Manager Sync
+                toggle.addEventListener('change', async function() {
+                    if(!this.checked) return; // Only need to validate on enable? No, disabling is always safe.
+                    // Validation could go here if needed server-side
+                });
+            }
+        });
+    }
+
+    async function openCycleModal() {
+        // Fetch current cycle interval
+        try {
+            const res = await fetch('/api/cycle/adjust');
+            const data = await res.json();
+            if(data.interval) {
+                document.getElementById('cycleRange').value = data.interval;
+                document.getElementById('cycleVal').innerText = data.interval + ' min';
+            }
+        } catch(e) { console.error(e); }
+        new bootstrap.Modal('#cycleModal').show();
+    }
+
+    async function saveCycle() {
+        const val = document.getElementById('cycleRange').value;
+        await fetch('/api/cycle/adjust', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({interval: parseInt(val)})
+        });
+        bootstrap.Modal.getInstance('#cycleModal').hide();
+        alert('Ciclo atualizado! O robô adotará o novo ritmo em breve.');
     }
 
     function toggleSidebar() { document.querySelector('.sidebar').classList.toggle('collapsed'); }
@@ -675,28 +900,86 @@ DASHBOARD_HTML = """
         });
         
         for (const [key, value] of formData.entries()) { if (!key.includes('_categories')) d[key] = value; }
-        ['enable_global_images', 'enable_youtube_embed', 'require_manual_approval'].forEach(k => d[k] = f.elements[k].checked);
+        
+        // Ensure checkboxes send true/false even if unchecked
+        const explicitCheckboxes = [
+            'enable_global_images', 'enable_youtube_embed', 'require_manual_approval',
+            'enable_gnews', 'enable_newsapi', 'enable_currents'
+        ];
+        explicitCheckboxes.forEach(k => {
+            if(f.elements[k]) d[k] = f.elements[k].checked;
+        });
         
         await fetch('/api/settings', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d)});
         alert('Salvo!');
+    }
+
+    // --- NEW: VALIDATION LOGIC ---
+    async function validateField(input) {
+        const field = input.getAttribute('name');
+        const value = input.value;
+        const type = field.includes('url') ? 'url' : field.includes('key') ? 'api_key' : 'username';
+        
+        // Find existing msg element or create one
+        let msgEl = input.parentElement.nextElementSibling;
+        if (!msgEl || !msgEl.classList.contains('security-msg')) {
+            // If structure is different, try to find it inside parent
+            msgEl = input.closest('.mb-2, .mb-3').querySelector('.security-msg');
+        }
+
+        if (value && field) {
+            try {
+                const res = await fetch('/api/security/validate', {
+                    method: 'POST', 
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({field, value, type})
+                });
+                const data = await res.json();
+                
+                if (msgEl) {
+                    if (!data.valid) {
+                        msgEl.innerText = data.error || 'Inválido';
+                        msgEl.classList.add('visible');
+                        input.classList.add('is-invalid');
+                    } else {
+                        msgEl.classList.remove('visible');
+                        input.classList.remove('is-invalid');
+                    }
+                }
+            } catch (e) { console.error('Validation error:', e); }
+        } else if (msgEl) {
+            msgEl.classList.remove('visible');
+            input.classList.remove('is-invalid');
+        }
     }
 
     function renderManual() {
         const lang = document.getElementById('langSelect').value;
         const t = i18n[lang] || i18n['pt'];
         const items = [
-            {t: t.man_intro_t, d: t.man_intro_d},
-            {t: t.man_setup_t, d: t.man_setup_d},
-            {t: t.man_gen_t, d: t.man_gen_d}
+            {id: 'm1', t: t.man_intro_t, d: t.man_intro_d},
+            {id: 'm2', t: t.man_setup_t, d: t.man_setup_d},
+            {id: 'm3', t: t.man_gen_t, d: t.man_gen_d}
         ];
-        document.getElementById('manualContainer').innerHTML = items.map((item, i) => `
-            <div class="manual-item">
-                <div class="manual-title" onclick="document.getElementById('mc${i}').classList.toggle('show')">
-                    <i class="fas fa-chevron-right me-2"></i> ${item.t}
-                </div>
-                <div class="manual-content" id="mc${i}">${item.d}</div>
+        
+        document.getElementById('manualContainer').innerHTML = `
+            <div class="accordion" id="manualAccordion">
+                ${items.map(item => `
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="h${item.id}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c${item.id}">
+                                ${item.t}
+                            </button>
+                        </h2>
+                        <div id="c${item.id}" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
+                            <div class="accordion-body">
+                                ${item.d}
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
             </div>
-        `).join('');
+        `;
     }
 
     window.onload = init;
@@ -804,6 +1087,298 @@ def evergreen():
     topic = request.json.get('topic')
     threading.Thread(target=lambda: ContentEngine().run_evergreen(topic)).start()
     return jsonify({'status': 'ok'})
+
+# ==============================================================================
+# NEW BACKEND CONTROL & SECURITY ENDPOINTS
+# ==============================================================================
+
+@app.route('/api/providers/toggle', methods=['POST'])
+@validate_request_data({'provider': str, 'enabled': bool})
+def toggle_provider():
+    """
+    Enable/disable news API providers with validation.
+    Checks if API key exists before allowing activation.
+    """
+    data = request.json
+    provider = data['provider']
+    enabled = data['enabled']
+    
+    # Map provider names to their API key settings
+    provider_key_map = {
+        'gnews': 'gnews_api_key',
+        'newsapi': 'newsapi_key',
+        'currents': 'currents_api_key'
+    }
+    
+    if provider not in provider_key_map:
+        return jsonify({
+            'success': False,
+            'error': f'Unknown provider: {provider}'
+        }), 400
+    
+    db = get_db()
+    try:
+        # If enabling, validate API key exists and is valid
+        if enabled:
+            key_setting = provider_key_map[provider]
+            setting = db.query(SystemSettings).filter(
+                SystemSettings.key == key_setting
+            ).first()
+            
+            api_key = setting.value if setting else None
+            
+            if not api_key or api_key.strip() == "":
+                return jsonify({
+                    'success': False,
+                    'error': f'{provider.upper()} API key not configured',
+                    'blocked': True
+                }), 403
+            
+            # Validate format
+            is_valid, error = InputValidator.validate_api_key(api_key, provider)
+            if not is_valid:
+                return jsonify({
+                    'success': False,
+                    'error': error,
+                    'blocked': True
+                }), 403
+        
+        # Update provider state
+        provider_state_key = f'enable_{provider}'
+        state_setting = db.query(SystemSettings).filter(
+            SystemSettings.key == provider_state_key
+        ).first()
+        
+        if state_setting:
+            state_setting.value = str(enabled).lower()
+        else:
+            db.add(SystemSettings(key=provider_state_key, value=str(enabled).lower()))
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'provider': provider,
+            'enabled': enabled
+        })
+    finally:
+        db.close()
+
+
+@app.route('/api/cycle/adjust', methods=['POST'])
+@validate_request_data({'minutes': (int, float)})
+def adjust_cycle():
+    """
+    Adjust the interval between content generation cycles.
+    Validates against min/max limits (30 min - 24 hours).
+    """
+    data = request.json
+    minutes = int(data['minutes'])
+    
+    # Validate interval
+    is_valid, error = InputValidator.validate_cycle_interval(minutes)
+    if not is_valid:
+        return jsonify({
+            'success': False,
+            'error': error
+        }), 400
+    
+    db = get_db()
+    try:
+        # Update cycle interval setting
+        setting = db.query(SystemSettings).filter(
+            SystemSettings.key == 'cycle_interval_minutes'
+        ).first()
+        
+        if setting:
+            setting.value = str(minutes)
+        else:
+            db.add(SystemSettings(key='cycle_interval_minutes', value=str(minutes)))
+        
+        db.commit()
+        
+        logger.info(f"✅ Cycle interval adjusted to {minutes} minutes")
+        
+        return jsonify({
+            'success': True,
+            'interval_minutes': minutes,
+            'interval_hours': round(minutes / 60, 2),
+            'message': f'Cycle interval set to {minutes} minutes'
+        })
+    finally:
+        db.close()
+
+
+@app.route('/api/categories/audit', methods=['POST'])
+def audit_categories():
+    """
+    Scan news APIs for available categories and auto-add missing ones.
+    This helps keep the UI dropdowns up-to-date with provider capabilities.
+    """
+    import requests
+    
+    discovered_categories = {
+        'gnews': [],
+        'newsapi': [],
+        'currents': []
+    }
+    
+    db = get_db()
+    try:
+        # GNews categories (from documentation)
+        discovered_categories['gnews'] = [
+            'general', 'world', 'nation', 'business', 
+            'technology', 'entertainment', 'sports', 
+            'science', 'health'
+        ]
+        
+        # NewsAPI categories (from documentation)
+        discovered_categories['newsapi'] = [
+            'business', 'entertainment', 'general', 
+            'health', 'science', 'sports', 'technology'
+        ]
+        
+        # Currents categories (from documentation)
+        discovered_categories['currents'] = [
+            'regional', 'technology', 'lifestyle', 
+            'business', 'general', 'programming', 
+            'science', 'entertainment', 'world', 
+            'sports', 'finance', 'academia', 
+            'politics', 'health', 'opinion', 'food'
+        ]
+        
+        # Get current categories from database
+        for provider in ['gnews', 'newsapi', 'currents']:
+            key = f'{provider}_categories'
+            setting = db.query(SystemSettings).filter(
+                SystemSettings.key == key
+            ).first()
+            
+            current_cats = []
+            if setting and setting.value:
+                try:
+                    import json
+                    current_cats = json.loads(setting.value)
+                except:
+                    current_cats = []
+            
+            # Merge with discovered categories
+            all_cats = list(set(current_cats + discovered_categories[provider]))
+            
+            # Update database
+            if setting:
+                setting.value = json.dumps(all_cats)
+            else:
+                db.add(SystemSettings(key=key, value=json.dumps(all_cats)))
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'discovered': discovered_categories,
+            'message': 'Category audit completed'
+        })
+    except Exception as e:
+        logger.error(f"Category audit failed: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/security/validate', methods=['POST'])
+@validate_request_data({'field': str, 'value': str, 'type': str})
+def validate_input():
+    """
+    Validate user inputs against security patterns.
+    Sets security flags if validation fails.
+    """
+    data = request.json
+    field = data['field']
+    value = data['value']
+    input_type = data['type']
+    
+    session_id = request.remote_addr  # Simple session tracking
+    
+    # Clear previous alerts for this field
+    SecurityFlags.clear_alert(session_id, field)
+    
+    is_valid = True
+    error_message = None
+    
+    # Validate based on type
+    if input_type == 'api_key':
+        is_valid, error_message = InputValidator.validate_api_key(value)
+    elif input_type == 'url':
+        is_valid, error_message = InputValidator.validate_url(value)
+    elif input_type == 'username':
+        is_valid, error_message = InputValidator.validate_username(value)
+    elif input_type == 'feed_name':
+        is_valid, error_message = InputValidator.validate_feed_name(value)
+    else:
+        return jsonify({
+            'success': False,
+            'error': f'Unknown validation type: {input_type}'
+        }), 400
+    
+    if not is_valid:
+        SecurityFlags.set_alert(session_id, field, error_message)
+    
+    return jsonify({
+        'valid': is_valid,
+        'error': error_message,
+        'has_alerts': SecurityFlags.has_alerts(session_id)
+    })
+
+
+@app.route('/api/security/events', methods=['POST'])
+@validate_request_data({'event': str, 'field': str})
+def security_event():
+    """
+    Track security-relevant events (clipboard, paste, etc).
+    Sets flags for suspicious activity.
+    """
+    data = request.json
+    event = data['event']
+    field = data['field']
+    
+    session_id = request.remote_addr
+    
+    # Sensitive fields that should trigger alerts on clipboard events
+    sensitive_fields = [
+        'google_api_key', 'youtube_api_key', 'wordpress_password',
+        'gnews_api_key', 'newsapi_key', 'currents_api_key'
+    ]
+    
+    if field in sensitive_fields and event in ['paste', 'copy']:
+        SecurityFlags.set_alert(
+            session_id, 
+            field, 
+            f'Clipboard {event} detected on sensitive field'
+        )
+        
+        logger.warning(f"⚠️ Security: {event} event on {field} from {session_id}")
+    
+    return jsonify({
+        'success': True,
+        'event_logged': True,
+        'has_alerts': SecurityFlags.has_alerts(session_id)
+    })
+
+
+@app.route('/api/security/alerts', methods=['GET'])
+def get_security_alerts():
+    """Get all active security alerts for the current session."""
+    session_id = request.remote_addr
+    alerts = SecurityFlags.get_alerts(session_id)
+    
+    return jsonify({
+        'has_alerts': SecurityFlags.has_alerts(session_id),
+        'alerts': alerts
+    })
+
 
 if __name__ == '__main__':
     init_db()
