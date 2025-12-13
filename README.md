@@ -51,16 +51,57 @@ python -c "from src.config.database import init_db; init_db()"
 Utilize o launcher para iniciar Engine, Dashboard e Sistema de Aprovação:
 
 ```bash
-# Windows
 start_all.bat
 
-# Linux/Mac
 # Linux/Mac
 python main.py & python dashboard_launcher.py
 ```
 
 ### 3. Acesso
 - **Dashboard de Gestão:** http://localhost:5000
+
+---
+
+## 📖 Guia de Funcionalidades (v8.3)
+
+### 1. Histórico & Chat
+O sistema armazena todas as gerações no banco de dados.
+- Na aba **Evergreen**, clique em qualquer linha do histórico para abrir o **Modo Chat**.
+- Visualize as mensagens exatas enviadas (User) e recebidas (Assistant).
+- Status "COMPLETED" indica que o artigo foi finalizado com sucesso.
+
+### 2. Seletor de Modelo AI
+Em **Configurações > Google Ecosystem**, escolha o motor ideal:
+- **Gemini Pro (Melhor para Raciocínio Complexo)**: Use para artigos longos, analíticos ou que exigem alta criatividade.
+- **Gemini Flash (Alta Velocidade)**: Use para notícias rápidas ou quando a velocidade de resposta for crítica (ex: testes).
+
+### 3. Controle de Performance (NOVO v8.3)
+No menu **Configurações > Painel de Controle**:
+- **Frequência de Atualização**: Slider preciso para definir o intervalo de gerações (5 min até 4 horas).
+- **Otimização de Sistema**: Botão "Otimizar Sistema" que executa limpeza profunda de RAM (`gc.collect`) e compactação de banco de dados (`VACUUM`) para manter o Dashboard leve.
+
+### 4. Indicador de Ambiente
+O Dashboard exibe um badge no topo:
+- **VERDE (DEV)**: Ambiente de desenvolvimento. Seguro para testar.
+- **VERMELHO (PROD)**: Ambiente de produção. Ações de escrita (POST/DELETE) devem ser feitas com cautela.
+
+---
+
+## 🛠️ Deployment e Variáveis de Ambiente
+
+Para deploy em produção (ex: Cloud Run, Heroku, VPS), configure as variáveis de ambiente. O `DeploymentService` validará estas chaves antes do build.
+
+| Variável | Descrição | Obrigatório |
+| :--- | :--- | :--- |
+| `FLASK_ENV` | Define o ambiente (`DEV` ou `PROD`). | Sim |
+| `GOOGLE_API_KEY` | Chave Mestre do Gemini. | Sim |
+| `GOOGLE_PROJECT_ID` | Project ID do GCP para Vertex AI. | Sim |
+| `YOUTUBE_API_KEY` | Para busca de vídeos relacionados. | Não (Recomendado) |
+| `WORDPRESS_URL` | URL do blog de destino. | Sim |
+| `WORDPRESS_USERNAME` | Usuário de publicação. | Sim |
+| `WORDPRESS_PASSWORD` | Application Password (não a senha de login). | Sim |
+
+> **Nota**: Tokens de API de Notícias (GNews, NewsAPI) são opcionais e podem ser ativados via Dashboard.
 
 ---
 

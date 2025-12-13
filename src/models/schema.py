@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, DateTime, Float, Boolean
+from sqlalchemy import Column, Integer, String, Text, DateTime, Float, Boolean, ForeignKey
 from src.config.database import Base
 
 # ==============================================================================
@@ -106,3 +106,23 @@ class ImageCache(Base):
     last_hit = Column(DateTime)
     created_at = Column(DateTime, default=datetime.now)
     expires_at = Column(DateTime)
+
+# ==============================================================================
+# HISTÓRICO E SESSÕES (v8.2)
+# ==============================================================================
+class Thread(Base):
+    __tablename__ = 'threads'
+    id = Column(Integer, primary_key=True)
+    session_id = Column(String(36), unique=True, index=True) # UUID
+    title = Column(String(200))
+    created_at = Column(DateTime, default=datetime.now)
+    status = Column(String(20), default='ACTIVE')
+
+class Message(Base):
+    __tablename__ = 'messages'
+    id = Column(Integer, primary_key=True)
+    thread_id = Column(Integer, ForeignKey('threads.id'), index=True)
+    role = Column(String(20)) # user/assistant/system
+    content = Column(Text)
+    tokens_count = Column(Integer, default=0)
+    timestamp = Column(DateTime, default=datetime.now)

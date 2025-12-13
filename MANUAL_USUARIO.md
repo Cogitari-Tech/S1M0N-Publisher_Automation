@@ -29,6 +29,13 @@ Na aba **Configurações**, você tem controles mestres:
     * **Ativado:** O robô cria o post como "Rascunho" ou salva numa fila interna (veja em http://localhost:5001).
     * **Desativado:** O robô publica diretamente no seu site (Cuidado!).
 
+### 5. Manutenção e Performance ("Botão Mágico")
+Se o dashboard ficar lento após muitas gerações:
+1.  Vá em **Configurações > Painel de Controle**.
+2.  Clique em **Otimizar Sistema**.
+3.  O robô fará uma faxina na memória RAM e compactará o arquivo de banco de dados (`.db`) para recuperar performance.
+
+
 ## Dicas de Segurança
 * **Hard Limit:** Mantenha o "Limite de Artigos/Ciclo" em 5 ou menos para evitar que seu site pareça um spammer.
 * **Logs:** Se algo der errado, verifique a caixa preta de logs na Home. "FAIL" ou "ERROR" indicarão o problema.

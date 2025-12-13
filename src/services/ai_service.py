@@ -11,6 +11,7 @@ from typing import Optional, Dict
 from src.config.settings import settings
 from src.config.database import get_db
 from src.models.schema import CachedContent, ImageCache, PublishedArticle
+from src.services.ai.factory import ModelFactory
 
 # Logger
 logger = logging.getLogger(__name__)
@@ -21,13 +22,11 @@ class AIService:
         self._setup_vertex_ai()
 
     def _setup_gemini(self):
-        api_key = settings.GOOGLE_API_KEY
-        if api_key:
-            try:
-                genai.configure(api_key=api_key)
-                self.text_model = genai.GenerativeModel('gemini-2.0-flash-exp')
-            except: self.text_model = None
-        else: self.text_model = None
+        try:
+            self.client = ModelFactory.create_client()
+        except Exception as e:
+            logger.error(f"AI Client Init Error: {e}")
+            self.client = None
 
     def _setup_vertex_ai(self):
         pid = settings.GOOGLE_PROJECT_ID
@@ -95,7 +94,7 @@ class AIService:
             db.close()
 
     def generate_article(self, news_item, is_evergreen: bool = False) -> Optional[Dict]:
-        if not self.text_model: return None
+        if not self.client: return None
         
         import hashlib
         content_hash = hashlib.md5(f"{news_item.title}|{news_item.summary}".encode()).hexdigest()
@@ -132,8 +131,8 @@ class AIService:
         """
         
         try:
-            response = self.text_model.generate_content(prompt)
-            clean_text = response.text.strip().replace('```json', '').replace('```', '')
+            clean_text = self.client.generate(prompt)
+            clean_text = clean_text.strip().replace('```json', '').replace('```', '')
             result = json.loads(clean_text)
             
             # Verificação de Integridade (Camada Dupla)
