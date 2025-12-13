@@ -45,6 +45,7 @@ class Settings:
     GOOGLE_API_KEY: Optional[str] = os.getenv("GOOGLE_API_KEY")
     GOOGLE_PROJECT_ID: Optional[str] = os.getenv("GOOGLE_PROJECT_ID")
     GOOGLE_LOCATION: str = os.getenv("GOOGLE_LOCATION", "us-central1")
+    AI_MODEL_TYPE: str = os.getenv("AI_MODEL_TYPE", "pro").lower() # pro, flash
 
     # --- YOUTUBE ---
     YOUTUBE_API_KEY: Optional[str] = os.getenv("YOUTUBE_API_KEY")

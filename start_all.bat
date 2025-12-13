@@ -1,37 +1,59 @@
 @echo off
+title S1M0N Launcher
+
 echo ========================================
-echo   CONTENT ROBOT v7.0 - GOOGLE EDITION
+echo   CONTENT ROBOT v8.3 - GOOGLE ECOSYSTEM
 echo ========================================
 echo.
 
 cd /d "%~dp0"
 
-REM Ativa ambiente virtual se existir
-if exist venv\Scripts\activate.bat (
-    call venv\Scripts\activate.bat
-)
+REM --- CHECK PYTHON ---
+python --version >nul 2>&1
+if errorlevel 1 goto NoPython
 
-echo [1/3] Iniciando Engine (Main Loop)......
-start "Content Engine v7" cmd /k python main.py
+REM --- CHECK VENV ---
+if exist venv\Scripts\activate.bat goto ActivateVenv
+goto StartEngine
 
-timeout /t 3 /nobreak > nul
+:ActivateVenv
+echo [INFO] Ativando ambiente virtual (venv)...
+call venv\Scripts\activate.bat
+goto StartEngine
 
-echo [2/3] Iniciando Dashboard Web...........
-start "Dashboard v7" cmd /k python dashboard_launcher.py
+:StartEngine
+echo.
+echo [1/3] Iniciando Engine (Main Loop)...
+start "S1M0N Engine" cmd /k "python main.py"
 
-timeout /t 3 /nobreak > nul
+REM --- WAIT ---
+timeout /t 5 /nobreak > nul
 
+REM --- START DASHBOARD ---
+echo [2/3] Iniciando Dashboard Web...
+start "S1M0N Dashboard" cmd /k "python dashboard_launcher.py"
 
 echo.
 echo ========================================
-echo   TODOS OS SISTEMAS ONLINE!
+echo   SISTEMA INICIADO
 echo ========================================
 echo.
 echo   - Dashboard: http://localhost:5000
-
 echo.
-echo   Pressione qualquer tecla para encerrar todos os processos...
+echo   Pressione qualquer tecla para encerrar TUDO...
 pause > nul
 
-taskkill /FI "WINDOWTITLE eq Content Engine v7" /F
-taskkill /FI "WINDOWTITLE eq Dashboard v7" /F
+REM --- SHUTDOWN ---
+taskkill /FI "WINDOWTITLE eq S1M0N Engine" /F
+taskkill /FI "WINDOWTITLE eq S1M0N Dashboard" /F
+goto End
+
+:NoPython
+echo.
+echo [ERROR] Python nao encontrado. Instale o Python 3.10+ e adicione ao PATH.
+pause
+goto End
+
+:End
+echo [OFF] Encerrado.
+timeout /t 3 > nul
