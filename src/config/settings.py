@@ -68,6 +68,17 @@ class Settings:
         """
         errors = []
 
+        # 0. Verificação de Gitignore (Segurança de Código)
+        gitignore_path = BASE_DIR / '.gitignore'
+        if gitignore_path.exists():
+            try:
+                with open(gitignore_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    if '.env' not in content:
+                         errors.append("❌ GRAVE: O arquivo '.env' NÃO está listado no .gitignore. Risco de vazamento de credenciais.")
+            except Exception as e:
+                logging.warning(f"⚠️ Não foi possível ler .gitignore: {e}")
+        
         # 1. Segurança Web
         if not cls.FLASK_SECRET_KEY:
             errors.append("❌ FLASK_SECRET_KEY não está definida. O Dashboard está vulnerável.")
@@ -83,8 +94,8 @@ class Settings:
         if errors:
             error_msg = "\n".join(errors)
             logging.critical(f"\nERRO DE CONFIGURAÇÃO:\n{error_msg}")
-            # Em produção, você pode querer descomentar a linha abaixo para abortar:
-            # sys.exit(1) 
+            # FALHA SEGURA: Impede a inicialização se houver riscos graves
+            sys.exit(1) 
 
     @staticmethod
     def get(key: str, default: any = None) -> any:

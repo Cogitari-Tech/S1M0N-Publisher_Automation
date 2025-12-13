@@ -11,8 +11,11 @@ import psutil
 import gc
 import time
 from datetime import datetime
-from flask import Flask, render_template, jsonify, request, send_from_directory
+from flask import Flask, render_template, jsonify, request, send_from_directory, render_template_string
 from flask_cors import CORS
+from flask_talisman import Talisman
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import hashlib
 
 # Imports da Arquitetura
@@ -32,6 +35,34 @@ if not os.path.exists(TEMPLATE_DIR): os.makedirs(TEMPLATE_DIR)
 app = Flask(__name__, static_folder=STATIC_DIR, template_folder=TEMPLATE_DIR)
 CORS(app)
 
+# --- SECURITY CONFIGURATION ---
+# 1. Rate Limiting (Prevention of Brute Force/DDoS)
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
+
+# 2. Security Headers (CSP, HSTS, etc.)
+# Using nonce to allow inline scripts safely. 'unsafe-inline' removed for strict security.
+csp = {
+    'default-src': '\'self\'',
+    'script-src': ['\'self\'', 'https://cdn.jsdelivr.net'], # Bootstrap JS
+    'style-src': ['\'self\'', '\'unsafe-inline\'', 'https://fonts.googleapis.com', 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com'], # Bootstrap CSS, FontAwesome
+    'font-src': ['\'self\'', 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'], # FontAwesome Webfonts
+    'img-src': ['\'self\'', 'data:', 'https:'],
+}
+
+# Note: Report Only mode helps finding violations without breaking the app immediately.
+# Switch content_security_policy_report_only to False when stable.
+talisman = Talisman(
+    app,
+    content_security_policy=csp,
+    content_security_policy_nonce_in=['script-src'],
+    content_security_policy_report_only=False
+)
+
 logger = logging.getLogger(__name__)
 
 # Estado Global
@@ -43,16 +74,16 @@ SYSTEM_STATE = "STOPPED"
 
 @app.route('/test')
 def test():
-    return """<!DOCTYPE html>
+    return render_template_string("""<!DOCTYPE html>
 <html><head><title>TEST</title></head>
 <body style='background:black;color:lime;font-size:30px;padding:50px;'>
 <h1>✅ SERVER WORKING</h1>
 <p>If you see this, the server is responding.</p>
 <button onclick='alert("JS WORKS!")' style='font-size:20px;padding:20px;'>CLICK TO TEST JS</button>
-<script>
+<script nonce="{{ csp_nonce() }}">
 document.body.innerHTML += '<p style="color:yellow;">✅ JAVASCRIPT EXECUTED</p>';
 </script>
-</body></html>"""
+</body></html>""")
 
 @app.route('/')
 def index(): 
@@ -164,6 +195,7 @@ def settings_route():
         db.commit(); db.close(); return jsonify({'success': True})
 
 @app.route('/api/evergreen', methods=['POST'])
+@limiter.limit("5 per minute")
 def evergreen():
     topic = request.json.get('topic')
     threading.Thread(target=lambda: ContentEngine().run_evergreen(topic)).start()
@@ -636,6 +668,7 @@ def reject_pending():
         db.close()
 
 @app.route('/api/gemini/validate', methods=['POST'])
+@limiter.limit("10 per minute")
 def gemini_validate():
     """
     Validates Gemini API Key and fetches available models.
