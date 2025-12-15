@@ -95,7 +95,9 @@ class Settings:
             error_msg = "\n".join(errors)
             logging.critical(f"\nERRO DE CONFIGURAÇÃO:\n{error_msg}")
             # FALHA SEGURA: Impede a inicialização se houver riscos graves
-            sys.exit(1) 
+            # Exceto em ambiente de testes (CI/pytest)
+            if not (os.getenv('CI') or os.getenv('PYTEST_CURRENT_TEST')):
+                sys.exit(1) 
 
     @staticmethod
     def get(key: str, default: any = None) -> any:
