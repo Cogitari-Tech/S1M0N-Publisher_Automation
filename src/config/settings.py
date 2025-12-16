@@ -95,9 +95,12 @@ class Settings:
             error_msg = "\n".join(errors)
             logging.critical(f"\nERRO DE CONFIGURAÇÃO:\n{error_msg}")
             # FALHA SEGURA: Impede a inicialização se houver riscos graves
-            # Exceto em ambiente de testes (CI/pytest)
-            if not (os.getenv('CI') or os.getenv('PYTEST_CURRENT_TEST')):
-                sys.exit(1) 
+            # Exceto em ambiente de testes (CI/pytest) ou desenvolvimento (Docker sem .env)
+            is_dev_mode = os.getenv('CI') or os.getenv('PYTEST_CURRENT_TEST') or os.getenv('DOCKER_ENV') == 'development'
+            if not is_dev_mode:
+                sys.exit(1)
+            else:
+                logging.warning("⚠️  Rodando em modo de desenvolvimento - validação relaxada") 
 
     @staticmethod
     def get(key: str, default: any = None) -> any:
