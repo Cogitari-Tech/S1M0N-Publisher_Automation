@@ -19,4 +19,4 @@ if __name__ == "__main__":
     print("👉 Acesso: http://localhost:5000")
     
     # O use_reloader=False evita que o script rode duas vezes ao iniciar
-    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
+    app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
