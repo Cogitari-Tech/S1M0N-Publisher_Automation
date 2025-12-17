@@ -214,7 +214,8 @@ def deployment_status():
         is_ready = DeploymentService.prepare_build(env)
         return jsonify({'env': env, 'ready': is_ready, 'version': 'v8.3'})
     except Exception as e:
-        return jsonify({'env': env, 'ready': False, 'error': str(e)})
+        logging.exception("Error in deployment_status endpoint")  # Log the error and stack trace
+        return jsonify({'env': env, 'ready': False, 'error': 'An internal error has occurred.'})
 
 @app.route('/api/providers/toggle', methods=['POST'])
 @validate_request_data({'provider': str, 'enabled': bool})
