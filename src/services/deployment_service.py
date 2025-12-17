@@ -39,7 +39,7 @@ class DeploymentService:
             if env == 'PROD':
                 raise EnvironmentError(error_msg)
             else:
-                logger.warning(f"{error_msg} (Allowed in DEV)")
+                logger.warning("⛔ Build Blocked. One or more critical environment variables are missing. (Allowed in DEV)")
                 return False
                 
         logger.info("✅ Environment validated. Build prepared.")
