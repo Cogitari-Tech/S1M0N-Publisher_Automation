@@ -98,7 +98,7 @@ temp/
         """
         secret = self.generate_secret_key()
         
-        content = f"""
+        content = """
 # =======================================================
 # CONTENT ROBOT v7.0 - CONFIGURAÇÃO DE AMBIENTE
 # =======================================================
@@ -107,7 +107,7 @@ temp/
 
 # --- SEGURANÇA DO SISTEMA (OBRIGATÓRIO) ---
 # Chave usada para assinar cookies de sessão do Dashboard Flask
-FLASK_SECRET_KEY={secret}
+FLASK_SECRET_KEY=CHANGEME
 # Nível de Log: INFO, DEBUG, ERROR
 LOG_LEVEL=INFO
 
@@ -141,6 +141,7 @@ DATABASE_URI=sqlite:///content_robot.db
         else:
             self.write_file('.env.example', content)
             print("ℹ️  [INFO] '.env' já existe. Novo template salvo como '.env.example'.")
+        print(f"\n🔑 [IMPORTANT] GERE UMA CHAVE SECRETA SEGURA PARA 'FLASK_SECRET_KEY':\nFLASK_SECRET_KEY={secret}\nCopie e cole este valor no seu arquivo .env.\n")
 
 if __name__ == "__main__":
     # Executa a configuração no diretório atual
