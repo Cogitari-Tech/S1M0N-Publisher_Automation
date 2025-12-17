@@ -141,7 +141,7 @@ DATABASE_URI=sqlite:///content_robot.db
         else:
             self.write_file('.env.example', content)
             print("ℹ️  [INFO] '.env' já existe. Novo template salvo como '.env.example'.")
-        print(f"\n🔑 [IMPORTANT] GERE UMA CHAVE SECRETA SEGURA PARA 'FLASK_SECRET_KEY':\nFLASK_SECRET_KEY={secret}\nCopie e cole este valor no seu arquivo .env.\n")
+        print("\n🔑 [IMPORTANT] GERE UMA CHAVE SECRETA SEGURA PARA 'FLASK_SECRET_KEY'. Edite seu arquivo .env e defina um valor forte para FLASK_SECRET_KEY (não compartilhe essa chave).\n")
 
 if __name__ == "__main__":
     # Executa a configuração no diretório atual
