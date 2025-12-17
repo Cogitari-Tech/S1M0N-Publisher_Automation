@@ -610,7 +610,8 @@ def model_config():
             return jsonify({'success': True, 'mode': mode})
             
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        logging.exception("Exception in /api/model endpoint")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
     finally:
         db.close()
 
