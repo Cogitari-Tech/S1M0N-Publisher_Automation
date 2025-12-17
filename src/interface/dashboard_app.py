@@ -406,7 +406,7 @@ def audit_categories():
         logger.error(f"Category audit failed: {e}")
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': 'An internal error occurred'
         }), 500
     finally:
         db.close()
