@@ -1,50 +1,48 @@
-# ============================================
-# 1. AMBIENTE VIRTUAL E CONFIGURAÇÕES SENSÍVEIS
-# ============================================
-# Ignora o ambiente virtual Python
-venv/
+# =======================================================
+# .gitignore - Content Robot v7.0 (SECURITY ENFORCED)
+# =======================================================
 
-# Arquivo com as chaves de API e senhas
+# 1. SEGREDOS E AMBIENTE (CRÍTICO)
+# Bloqueia qualquer arquivo que possa conter credenciais [cite: 2, 6]
 .env
+.env.*
+!.env.example
+secrets/
+tokens/
 
-# Configurações do editor (geralmente específicas do usuário)
-.vscode/
-
-# ============================================
-# 2. CACHES E COMPILAÇÕES PYTHON
-# ============================================
-# Pastas de cache e compilação de bytecode
-__pycache__/
-*.pyc
-*.pyo
-
-# ============================================
-# 3. BANCO DE DADOS E ARQUIVOS DE BACKUP
-# ============================================
-# Arquivos de banco de dados SQLite (mutáveis)
-content_robot.db
-content_robot.sqlite
+# 2. BANCO DE DADOS
+# Nunca commitar bancos SQLite de produção 
+*.db
 *.sqlite
+*.sqlite3
+*.bak
+instance/
+data/
 
-# Backups e Logs de execução
-backups/
+# 3. DEPENDÊNCIAS PYTHON
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 4. LOGS E ARTEFATOS DE EXECUÇÃO
+# Evita vazamento de stack traces em logs commitados [cite: 3, 4]
+*.log
 logs/
-robot.log
+debug_*.txt
 
-# Arquivos de backup gerados pelo sistema (ex: content_robot_backup_20251126_...)
-*backup*
-
-# ============================================
-# 4. OUTPUTS E CONTEÚDO GERADO
-# ============================================
-# O robô gera conteúdo nestas pastas, que não devem ser rastreadas.
-articles/
+# 5. CONTEÚDO GERADO (RUNTIME)
 images/
-archive/
-cache/
+backups/
+exports/
+temp/
 
-# ============================================
-# 5. ARQUIVOS OS/EDITOR
-# ============================================
+# 6. IDE / SISTEMA
+.vscode/
+.idea/
 .DS_Store
-Thumbs.db
