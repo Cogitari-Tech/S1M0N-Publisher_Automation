@@ -532,7 +532,7 @@ def get_history_detail(session_id):
         })
     except Exception as e:
         logger.error(f"Error fetching history: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'success': False, 'error': 'An internal error has occurred.'}), 500
     finally:
         db.close()
 
