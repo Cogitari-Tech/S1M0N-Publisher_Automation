@@ -1,6 +1,7 @@
 services:
   # Serviço Principal - Content Robot (Main Engine)
   robot:
+    image: cogitarid/s1m0n-robot:s1monV7
     build: .
     container_name: s1m0n-robot
     restart: unless-stopped
@@ -46,6 +47,7 @@ services:
 
   # Dashboard Web Interface
   dashboard:
+    image: cogitarid/s1m0n-dashboard:s1monV7
     build: .
     container_name: s1m0n-dashboard
     restart: unless-stopped
