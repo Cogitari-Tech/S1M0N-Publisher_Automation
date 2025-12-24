@@ -709,7 +709,7 @@ def gemini_validate():
             
     except Exception as e:
         logger.error(f"Gemini Validation Error: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'success': False, 'error': 'Internal server error while validating Gemini API key'}), 500
 
 if __name__ == '__main__':
     init_db()
