@@ -96,7 +96,8 @@ temp/
         Gera o arquivo .env com os novos provedores detectados na tree
         (NewsAPI, Currents) e chaves de segurança obrigatórias.
         """
-        secret = self.generate_secret_key()
+        # Não grava chaves reais em claro no disco; use um placeholder e peça ao usuário para definir.
+        secret = "${FLASK_SECRET_KEY:-CHANGE_ME_GENERATE_STRONG_KEY}"
         
         content = f"""
 # =======================================================
