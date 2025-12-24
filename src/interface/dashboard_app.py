@@ -531,8 +531,8 @@ def get_history_detail(session_id):
                     'timestamp': m.timestamp.isoformat()
                 } for m in messages
             ]
-        })
-    except Exception as e:
+        logger.exception("Error fetching history")
+        return jsonify({'success': False, 'error': 'Internal server error while fetching history.'}), 500
         logger.error(f"Error fetching history: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
