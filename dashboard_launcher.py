@@ -12,6 +12,8 @@ from src.config.database import init_db
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
+DEBUG_MODE = os.environ.get("FLASK_DEBUG", "0").lower() in ("1", "true", "yes")
+
 if __name__ == "__main__":
     print("🔄 Inicializando Banco de Dados...")
     init_db()
@@ -19,4 +21,4 @@ if __name__ == "__main__":
     print("👉 Acesso: http://localhost:5000")
     
     # O use_reloader=False evita que o script rode duas vezes ao iniciar
-    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
+    app.run(host='0.0.0.0', port=5000, debug=DEBUG_MODE, use_reloader=False)
