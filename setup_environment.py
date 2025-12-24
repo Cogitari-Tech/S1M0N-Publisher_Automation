@@ -40,7 +40,7 @@ class ConfigurationManager:
         Gera um .gitignore robusto baseado na estrutura do projeto e 
         nos requisitos de segurança[cite: 14, 15].
         """
-        content = """
+        content = f"""
 # =======================================================
 # .gitignore - Content Robot v7.0 (SECURITY ENFORCED)
 # =======================================================
