@@ -652,8 +652,8 @@ def approve_pending():
             return jsonify({'success': True})
         return jsonify({'success': False, 'error': 'Not found'}), 404
     except Exception as e:
-        logger.error(f"Approval error: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        logger.error(f"Approval error: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
     finally:
         db.close()
 
