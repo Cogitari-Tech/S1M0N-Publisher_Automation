@@ -213,8 +213,10 @@ def deployment_status():
     try:
         is_ready = DeploymentService.prepare_build(env)
         return jsonify({'env': env, 'ready': is_ready, 'version': 'v8.3'})
-    except Exception as e:
-        return jsonify({'env': env, 'ready': False, 'error': str(e)})
+        except Exception:
+        logging.exception("Deployment status check failed for env %s", env)
+        return jsonify({'env': env, 'ready': False, 'error': 'Internal deployment status check failed'})
+        return jsonify({'env': env, 'ready': False, 'error': 'Internal deployment status check failed'})
 
 @app.route('/api/providers/toggle', methods=['POST'])
 @validate_request_data({'provider': str, 'enabled': bool})
