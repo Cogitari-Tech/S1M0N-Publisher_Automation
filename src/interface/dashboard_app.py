@@ -115,7 +115,7 @@ def control():
             return jsonify({'state': SYSTEM_STATE, 'message': 'System Optimized'})
         except Exception as e:
             logging.error(f"Optimization failed: {str(e)}")
-            return jsonify({'state': SYSTEM_STATE, 'error': str(e)}), 500
+            return jsonify({'state': SYSTEM_STATE, 'error': 'An internal error occurred during optimization'}), 500
 
     return jsonify({'state': SYSTEM_STATE})
 
