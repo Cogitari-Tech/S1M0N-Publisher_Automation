@@ -1,17 +1,12 @@
 name: TruffleHog Secret Scan
 
 on:
-  push:
-    branches:
-      - develop
-      - beta
-      - hotfix
-      
   pull_request:
     branches:
       - develop
       - beta
       - hotfix
+      - main
 permissions:
   contents: read
   issues: write
