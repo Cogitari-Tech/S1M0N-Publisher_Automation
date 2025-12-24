@@ -40,7 +40,7 @@ class ConfigurationManager:
         Gera um .gitignore robusto baseado na estrutura do projeto e 
         nos requisitos de segurança[cite: 14, 15].
         """
-        content = """
+        content = f"""
 # =======================================================
 # .gitignore - Content Robot v7.0 (SECURITY ENFORCED)
 # =======================================================
@@ -98,7 +98,7 @@ temp/
         """
         secret = self.generate_secret_key()
         
-        content = """
+        content = f"""
 # =======================================================
 # CONTENT ROBOT v7.0 - CONFIGURAÇÃO DE AMBIENTE
 # =======================================================
@@ -107,7 +107,7 @@ temp/
 
 # --- SEGURANÇA DO SISTEMA (OBRIGATÓRIO) ---
 # Chave usada para assinar cookies de sessão do Dashboard Flask
-FLASK_SECRET_KEY=CHANGEME
+FLASK_SECRET_KEY={secret}
 # Nível de Log: INFO, DEBUG, ERROR
 LOG_LEVEL=INFO
 
@@ -141,7 +141,6 @@ DATABASE_URI=sqlite:///content_robot.db
         else:
             self.write_file('.env.example', content)
             print("ℹ️  [INFO] '.env' já existe. Novo template salvo como '.env.example'.")
-        print("\n🔑 [IMPORTANT] GERE UMA CHAVE SECRETA SEGURA PARA 'FLASK_SECRET_KEY'. Edite seu arquivo .env e defina um valor forte para FLASK_SECRET_KEY (não compartilhe essa chave).\n")
 
 if __name__ == "__main__":
     # Executa a configuração no diretório atual

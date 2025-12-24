@@ -1,60 +1,86 @@
 name: TruffleHog Secret Scan
 
 on:
+  push:
+    branches:
+      - develop
+      - beta
+      - hotfix
+      
   pull_request:
     branches:
       - develop
-      - hotfix
       - beta
-      - main
+      - hotfix
+permissions:
+  contents: read
+  issues: write
 
 jobs:
-  trufflehog:
+  trufflehog-scan:
+    name: TruffleHog Scan (New Secrets Only)
     runs-on: ubuntu-latest
-    permissions:
-      contents: read     
-      issues: write
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set Up TruffleHog
+        with:
+          fetch-depth: 0
+      - name: Run TruffleHog (Scan apenas do PR ou último commit)
+        id: scan
         run: |
-          docker pull trufflesecurity/trufflehog:latest
-
-      - name: Run TruffleHog Scan
-        id: trufflehog
-        run: |
-          output=$(docker run --rm -v "$PWD:/pwd" trufflesecurity/trufflehog:latest github --repo https://github.com/Cogitari-Tech/S1M0N-Publisher_Automation)
-          {
-            echo 'trufflehog_output<<EOF'
-            echo "$output"
-            echo 'EOF'
-          } >> "$GITHUB_OUTPUT"
-
-
-      - name: Create Issue if secrets are found
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            SINCE_FLAG="--since-commit ${{ github.event.pull_request.base.sha }}"
+          else
+            SINCE_FLAG="--since-commit HEAD~1"
+          fi
+          docker run --rm \
+            -v "$PWD":/pwd \
+            trufflesecurity/trufflehog:latest \
+            git file:///pwd \
+            $SINCE_FLAG \
+            --json > trufflehog-results.json || true
+      - name: Process results and create issue
         env:
-          trufflehog_output: ${{ steps.trufflehog.outputs.trufflehog_output }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ## Verifica se o TruffleHog encontrou segredos
-          if [[ "$trufflehog_output" == *"Found unverified result"* || \
-                "$trufflehog_output" == *"Found verified result"* ]]; then
+          if [ -s trufflehog-results.json ]; then
+            echo "::error::TruffleHog encontrou segredos novos nas alterações."
 
-            ## Payload da issue (NÃO inclua o segredo no body)
-            payload=$(jq -n \
-              --arg title "## TITULO_DA_ISSUE (ex: TruffleHog: possíveis segredos encontrados)" \
-              --arg body "## MENSAGEM_DA_ISSUE (ex: O TruffleHog identificou possíveis segredos. Verifique os logs do pipeline.)" \
-              '{title: $title, body: $body}')
+            SUMMARY=$(jq -r -s '
+              .[] |
+              "🔴 **Tipo:** " + (.DetectorName // "N/A") + "\n" +
+              "📁 **Arquivo:** " + (.SourceMetadata.Data.Git.file // "N/A") + "\n" +
+              "📍 **Linha:** " + ((.SourceMetadata.Data.Git.line // 0) | tostring) + "\n" +
+              "----------------------------------------\n"
+            ' trufflehog-results.json)
 
-            ## Criação da issue via GitHub API
-            curl -sS -X POST \
+            BODY_JSON=$(jq -n --arg body "$SUMMARY" '{
+              title: "Falha de Segurança: Segredos Novos Detectados pelo TruffleHog",
+              body: (
+                "⚠️ Foram detectados **novos segredos** nas alterações recentes.\n\n" +
+                "### Detalhes encontrados:\n\n" +
+                $body +
+                "\n### Próximos passos recomendados:\n" +
+                "- ❌ Não faça merge deste PR\n" +
+                "- 🔄 Revogue ou rotacione as credenciais expostas\n" +
+                "- 🧹 Remova o segredo do código antes de prosseguir\n"
+              ),
+              labels: [
+                "security",
+                "DevOps & Infra"
+              ]
+            }')
+
+            # Criação da issue via API do GitHub
+            curl -s -X POST \
+              -H "Authorization: Bearer $GITHUB_TOKEN" \
               -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              https://api.github.com/repos/Cogitari-Tech/S1M0N-Publisher_Automation/issues \
-              -d "$payload"
+              https://api.github.com/repos/${{ github.repository }}/issues \
+              -d "$BODY_JSON"
 
+            # Falha o job para bloquear o merge
             exit 1
+          else
+            echo "✅ Nenhum segredo novo encontrado nas alterações atuais."
           fi

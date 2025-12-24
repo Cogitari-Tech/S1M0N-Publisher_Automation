@@ -22,16 +22,17 @@ class DeploymentService:
         logger.info(f"🔐 Validating secure build for ENV: {env}")
         
         # Check critical keys (never log values!)
-        critical_vars = {
-            'GOOGLE_API_KEY': settings.GOOGLE_API_KEY,
-            'FLASK_SECRET_KEY': settings.FLASK_SECRET_KEY,
-        }
+        missing = []
         
-        missing = [k for k, v in critical_vars.items() if not v]
+            if not settings.GOOGLE_API_KEY:
+            missing.append('GOOGLE_API_KEY')
+
+            if not settings.FLASK_SECRET_KEY:
+            missing.append('FLASK_SECRET_KEY')
         
         # Production strict checks
         if env == 'PROD':
-            if not settings.WORDPRESS_URL:
+            if not getattr(settings, 'WORDPRESS_URL', None):
                 missing.append('WORDPRESS_URL')
         
         if missing:
@@ -39,7 +40,7 @@ class DeploymentService:
             if env == 'PROD':
                 raise EnvironmentError(error_msg)
             else:
-                logger.warning("⛔ Build Blocked. One or more critical environment variables are missing. (Allowed in DEV)")
+                logger.warning(f"{error_msg} (Allowed in DEV)")
                 return False
                 
         logger.info("✅ Environment validated. Build prepared.")
