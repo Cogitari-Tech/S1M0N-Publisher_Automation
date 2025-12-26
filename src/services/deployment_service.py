@@ -23,11 +23,11 @@ class DeploymentService:
         
         # Check critical keys (never log values!)
         missing = []
-        
-            if not settings.GOOGLE_API_KEY:
+
+        if not settings.GOOGLE_API_KEY:
             missing.append('GOOGLE_API_KEY')
 
-            if not settings.FLASK_SECRET_KEY:
+        if not settings.FLASK_SECRET_KEY:
             missing.append('FLASK_SECRET_KEY')
         
         # Production strict checks

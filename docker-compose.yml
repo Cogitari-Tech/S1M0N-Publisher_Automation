@@ -1,7 +1,8 @@
 services:
   # Serviço Principal - Content Robot (Main Engine)
   robot:
-    image: cogitarid/s1m0n-robot:latest
+    image: s1m0n-publisher:latest
+    build: .
     container_name: s1m0n-robot
     restart: unless-stopped
     volumes:
@@ -19,21 +20,21 @@ services:
       - REQUIRE_MANUAL_APPROVAL=${REQUIRE_MANUAL_APPROVAL:-True}
       
       # Google Cloud / AI
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - GOOGLE_PROJECT_ID=${GOOGLE_PROJECT_ID}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      - GOOGLE_PROJECT_ID=${GOOGLE_PROJECT_ID:-}
       - GOOGLE_LOCATION=${GOOGLE_LOCATION:-us-central1}
       - AI_MODEL_TYPE=${AI_MODEL_TYPE:-pro}
-      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
+      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY:-}
       
       # Provedores de Notícias
-      - NEWSAPI_KEY=${NEWSAPI_KEY}
-      - CURRENTS_API_KEY=${CURRENTS_API_KEY}
-      - GNEWS_API_KEY=${GNEWS_API_KEY}
+      - NEWSAPI_KEY=${NEWSAPI_KEY:-}
+      - CURRENTS_API_KEY=${CURRENTS_API_KEY:-}
+      - GNEWS_API_KEY=${GNEWS_API_KEY:-}
       
       # WordPress (Publicação)
-      - WORDPRESS_URL=${WORDPRESS_URL}
-      - WORDPRESS_USERNAME=${WORDPRESS_USERNAME}
-      - WORDPRESS_PASSWORD=${WORDPRESS_PASSWORD}
+      - WORDPRESS_URL=${WORDPRESS_URL:-}
+      - WORDPRESS_USERNAME=${WORDPRESS_USERNAME:-}
+      - WORDPRESS_PASSWORD=${WORDPRESS_PASSWORD:-}
     command: python main.py
     networks:
       - s1m0n-network
@@ -46,7 +47,7 @@ services:
 
   # Dashboard Web Interface
   dashboard:
-    image: cogitarid/s1m0n-dashboard:latest
+    image: s1m0n-publisher:latest
     container_name: s1m0n-dashboard
     restart: unless-stopped
     ports:
@@ -62,11 +63,11 @@ services:
       - DATABASE_URI=sqlite:////app/data/content_robot.db
       
       # Google Cloud / AI (necessário para visualizar estatísticas)
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - GOOGLE_PROJECT_ID=${GOOGLE_PROJECT_ID}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      - GOOGLE_PROJECT_ID=${GOOGLE_PROJECT_ID:-}
       
       # WordPress (para links de publicação)
-      - WORDPRESS_URL=${WORDPRESS_URL}
+      - WORDPRESS_URL=${WORDPRESS_URL:-}
     command: python dashboard_launcher.py
     networks:
       - s1m0n-network

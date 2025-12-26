@@ -68,7 +68,10 @@ Talisman(
     app,
     content_security_policy=csp,
     content_security_policy_nonce_in=['script-src'],
-    content_security_policy_report_only=False
+    content_security_policy_report_only=False,
+    force_https=False,
+    force_https_permanent=False,
+    session_cookie_secure=False
 )
 
 logger = logging.getLogger(__name__)
@@ -77,6 +80,20 @@ SYSTEM_STATE = "STOPPED"
 # ------------------------------------------------------------------------------
 # Routes
 # ------------------------------------------------------------------------------
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+
+@app.route('/health')
+def health():
+    return jsonify({
+        'status': 'ok',
+        'app': 's1m0n-dashboard',
+        'version': 'v7.1'
+    })
+
 
 @app.route('/api/control', methods=['POST'])
 def control():
