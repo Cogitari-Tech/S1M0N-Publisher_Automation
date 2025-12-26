@@ -64,12 +64,14 @@ csp = {
     'img-src': ["'self'", "data:", "https:"],
 }
 
-Talisman(
-    app,
-    content_security_policy=csp,
-    content_security_policy_nonce_in=['script-src'],
-    content_security_policy_report_only=False
-)
+# Desativar Talisman em desenvolvimento
+if os.getenv('DOCKER_ENV') == 'production':
+    Talisman(
+        app,
+        content_security_policy=csp,
+        content_security_policy_nonce_in=['script-src'],
+        content_security_policy_report_only=False
+    )
 
 logger = logging.getLogger(__name__)
 SYSTEM_STATE = "STOPPED"
@@ -77,6 +79,16 @@ SYSTEM_STATE = "STOPPED"
 # ------------------------------------------------------------------------------
 # Routes
 # ------------------------------------------------------------------------------
+
+@app.route('/')
+def index():
+    """Rota principal - renderiza o dashboard"""
+    return render_template('index.html')
+
+@app.route('/health')
+def health():
+    """Health check endpoint"""
+    return jsonify({'status': 'ok', 'service': 'dashboard'}), 200
 
 @app.route('/api/control', methods=['POST'])
 def control():

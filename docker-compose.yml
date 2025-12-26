@@ -1,7 +1,10 @@
 services:
   # Serviço Principal - Content Robot (Main Engine)
   robot:
-    image: cogitarid/s1m0n-robot:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: s1m0n-robot:latest
     container_name: s1m0n-robot
     restart: unless-stopped
     volumes:
@@ -46,7 +49,10 @@ services:
 
   # Dashboard Web Interface
   dashboard:
-    image: cogitarid/s1m0n-dashboard:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: s1m0n-dashboard:latest
     container_name: s1m0n-dashboard
     restart: unless-stopped
     ports:
